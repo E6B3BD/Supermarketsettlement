@@ -21,7 +21,7 @@ from .components.ui_initializer import initialize_ui
 from .components.signal_connector import connect_signals
 
 # 事件管理器
-from handlers import AppHandlers
+from .handlers import AppHandlers
 
 class Window:
     def __init__(self, ):
@@ -32,9 +32,6 @@ class Window:
         self.handlers = AppHandlers(self.ui)
         # 槽函数的绑定 还存在问题
         connect_signals(self.ui,self.handlers)
-
-
-
 
     def show(self):
         # self.ui.setStyleSheet()

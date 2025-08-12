@@ -1,0 +1,24 @@
+# 数据库配置
+config:
+  host: '127.0.0.1'
+  user: 'root'
+  password: '123456'
+  database: 'feature'
+  charset: NULL # 不要做字符集检查 None yaml不支持
+  autocommit: False  # 建议设为 False，手动提交
+
+# 大类配置
+VALID_CATEGORIES:
+  - bottle
+  - box
+  - can
+  - soft_pack
+
+
+# 向量特征库的配置 512特征维度
+Qdrant:
+  - localhost
+  - 6333
+  - feature
+  - 512
+

@@ -7,8 +7,15 @@ import torch
 
 # 本地模块
 from .postprocess import aligning
-#from postprocess import aligning
+# from postprocess import aligning
 from utils.cfg import colors_dict
+
+
+# 线程
+from concurrent.futures import ThreadPoolExecutor
+import threading
+# 全局线程池（专门用于后处理），只创建一次
+_postprocess_pool = ThreadPoolExecutor(max_workers=8)
 
 
 
@@ -22,25 +29,47 @@ class SegModel():
         model_path=os.path.join(project_root,"models","Seg","best.pt")
         model =YOLO(model_path)
         model.to('cuda')
-        device = model.device
-        print(f"✅ 模型加载完成，当前设备: {device}")  # 输出如: cuda:0 或 cpu
+        model.overrides['verbose'] = False # 关掉YOLO日志
+        # device = model.device
+        # print(f"✅ 模型加载完成，当前设备: {device}")  # 输出如: cuda:0 或 cpu
         return model
     # 图像分割并扣除掩码图
     def SegImg(self,Img):
         # 存储
         MaskList=[]
         # Img=cv2.imread(Img) # 测试放开
+        clean_image = Img.copy()
         output=self.model(Img)[0]
+        # 安全检查：是否有分割掩码
+        if output.masks is None:
+            # 没有检测到目标，返回原图 + 空列表
+            return Img, []
         points=output.masks.xy
-        DrawImage=self.Drawsegmentation(Img,output)
-        for index, point in enumerate(points):
-            mask = self.contours(Img, point)
-            # cv2.imwrite(f"mask{index}.png", mask)
-            MaskList.append((mask,point))
-        for i in MaskList:
-            mask, point= i
-            aligning(mask,point)
-        return DrawImage,MaskList
+        DrawImage=self.Drawsegmentation(clean_image,output)
+
+
+        futures = []
+        for point in points:
+            mask = self.contours(clean_image, point)
+            # 提交到线程池
+            future = _postprocess_pool.submit(aligning, mask, point)
+            futures.append(future)
+        MaskList = []
+        for future in futures:
+            try:
+                result = future.result(timeout=5.0)
+                if result is not None:
+                    MaskList.append(result)
+            except Exception as e:
+                print(f"后处理任务失败: {e}")
+                continue
+
+        return DrawImage, MaskList
+
+        # for index, point in enumerate(points):
+        #     mask = self.contours(Img, point)
+        #     MaskList.append(aligning(mask, point))
+        # return DrawImage,MaskList
 
     # 创建轮廓掩码图
     def contours(self,image, points):
@@ -87,4 +116,4 @@ class SegModel():
 
 if __name__=="__main__":
     model=SegModel()
-    model.SegImg("0085.jpg")
+    model.SegImg("T.jpg")

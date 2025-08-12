@@ -45,7 +45,8 @@ class DailyLogger:
             when="midnight",
             interval=1,
             backupCount=self.backup_count,
-            encoding="utf-8"
+            encoding="utf-8",
+            delay=True  # 打开延迟避免多线程冲突
         )
         self.file_handler.suffix = "%Y-%m-%d.txt"
         self.file_handler.extMatch = r"^\d{4}-\d{2}-\d{2}\.txt$"

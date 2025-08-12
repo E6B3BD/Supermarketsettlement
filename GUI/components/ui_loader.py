@@ -16,6 +16,12 @@ def load_main_ui():
     ui_file.close()
     return window
 
+# 加载QSS文件
+def load_qss():
+    qss_path = Path(__file__).parent.parent / "Resources" / "qss" / "Home.qss"
+    with open(qss_path, "r", encoding="utf-8") as f:
+        return f.read()
+
 
 if __name__=="__main__":
     load_main_ui()

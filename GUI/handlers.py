@@ -13,10 +13,13 @@ from PySide2.QtCore import QObject
 from PySide2.QtWidgets import QApplication, QWidget, QPushButton, QVBoxLayout, QFileDialog
 from PySide2.QtGui import QImage, QPixmap
 from PySide2.QtCore import Qt
+from PySide2.QtCore import QTimer, QThreadPool
+import numpy as np
 
 # 加载本地包
 from .source.camera import VideoSource,SourceType
-from PySide2.QtCore import QTimer
+from .workers.seg_worker import SegWorker
+
 
 from logs.logger import DailyLogger
 
@@ -32,6 +35,24 @@ class AppHandlers(QObject):
         self.VS = VideoSource()  # 视频处理
         self.timer = QTimer()  # 视频播放定时器
         self.timer.timeout.connect(self.play_frame)  # 每次触发播放一帧
+
+
+
+
+
+        self.threadpool = QThreadPool()   # 线程池 管理子线程
+        self.threadpool.setMaxThreadCount(1)  # 防止多个推理同时跑
+        # 模型预热避免首帧推理慢
+        self.warmup_model()
+
+    def warmup_model(self):
+        dummy_frame = np.zeros((320, 320, 3), dtype=np.uint8)
+        try:
+            self.model.SegImg(dummy_frame)
+            self.log.info("✅ 模型预热完成")
+        except Exception as e:
+            self.log.error(f"模型预热失败: {e}")
+
 
     # 界面的切换
     def setup_navigation(self):
@@ -74,6 +95,7 @@ class AppHandlers(QObject):
         # 启动定时器，开始播放
         self.timer.start(self.delay_ms)
 
+    # 主线程触发
     def play_frame(self):
         """每次定时器触发，播放一帧"""
         ret, frame = self.VS.read()
@@ -81,28 +103,47 @@ class AppHandlers(QObject):
             self.log.info("🔚 视频播放结束")
             self.timer.stop()
             self.VS.release()
-            self.ui.discernlabel.clear()  # 播放结束清空画面
+            self.ui.discernlabel.clear()  # 不用线程是用这个方法
             return
-        # 分割处理
-        DrawImage,MaskList=self.model.SegImg(frame)
+
+            return
 
 
-        # 图像处理：缩放 + 转 RGB
-        resized = cv2.resize(DrawImage, (1024, 576), interpolation=cv2.INTER_AREA)
+
+        DrawImage, Featuremask = self.model.SegImg(frame)
+        self.on_seg_done(DrawImage,Featuremask)
+
+        # 如果卡断 将代码打开
+        # 防堆积：如果子线程还在跑，跳过这一帧
+        # if self.threadpool.activeThreadCount() > 0:
+        #     self.log.info("跳帧")
+        #     return
+        # worker = SegWorker(self.model, frame)   # 将模型和帧
+        # # 连接信号：结果回来时更新 UI
+        # worker.signals.result_ready.connect(self.on_seg_done)
+        # worker.signals.error_occurred.connect(self.on_seg_error)
+        # # 线程池自动分配线程
+        # self.threadpool.start(worker)
+
+    def on_seg_done(self, DrawImage, Featuremask):
+        """
+        ✅ 这个方法在主线程执行，收到子线程结果，更新 UI Featuremask特征掩码列表
+        """
+        resized = cv2.resize(DrawImage, (1024, 576))
         rgb = cv2.cvtColor(resized, cv2.COLOR_BGR2RGB)
-        h, w = rgb.shape[:2]
-        bytes_per_line = 3 * w
-        q_image = QImage(rgb.data, w, h, bytes_per_line, QImage.Format_RGB888)
+        h, w, c = rgb.shape
+        q_image = QImage(rgb.data, w, h, 3 * w, QImage.Format_RGB888)
         pixmap = QPixmap.fromImage(q_image)
-        # 显示到 label
         self.ui.discernlabel.setPixmap(pixmap)
+        # 线程
+        # if not self.VS.is_opened and self.threadpool.activeThreadCount() == 0:
+        #     self.ui.discernlabel.clear()
 
-    # 停止播放
-    def stop_playback(self):
-        self.timer.stop()
-        if self.VS.is_opened:
-            self.VS.release()
-        self.ui.discernlabel.clear()
+
+    def on_seg_error(self, error_msg):
+        self.log.error(f"分割任务失败: {error_msg}")
+
+
 
 
 

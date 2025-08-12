@@ -16,7 +16,7 @@ from pathlib import Path
 
 
 # 加载本地模块
-from .components.ui_loader import load_main_ui
+from .components.ui_loader import load_main_ui,load_qss
 from .components.ui_initializer import initialize_ui
 from .components.signal_connector import connect_signals
 
@@ -34,6 +34,7 @@ class Window:
         connect_signals(self.ui,self.handlers)
 
     def show(self):
-        # self.ui.setStyleSheet()
+        style=load_qss()
+        self.ui.setStyleSheet(style)
         self.ui.show()
 

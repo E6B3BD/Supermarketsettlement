@@ -37,9 +37,6 @@ class AppHandlers(QObject):
         self.timer.timeout.connect(self.play_frame)  # 每次触发播放一帧
 
 
-
-
-
         self.threadpool = QThreadPool()   # 线程池 管理子线程
         self.threadpool.setMaxThreadCount(1)  # 防止多个推理同时跑
         # 模型预热避免首帧推理慢
@@ -104,8 +101,6 @@ class AppHandlers(QObject):
             self.timer.stop()
             self.VS.release()
             self.ui.discernlabel.clear()  # 不用线程是用这个方法
-            return
-
             return
 
 

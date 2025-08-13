@@ -1,5 +1,6 @@
 from PySide2.QtCore import QRunnable, Slot, QObject, Signal
-
+import cv2
+from PySide2.QtGui import QImage, QPixmap
 class SegWorkerSignals(QObject):
     """
     专门用于跨线程通信的信号，必须定义在 QObject 子类中
@@ -20,6 +21,8 @@ class SegWorker(QRunnable):
         try:
             # 调用模型推理
             DrawImage, Featuremask = self.model.SegImg(self.frame)
+
+
             # 在子线程中 emit 结果
             self.signals.result_ready.emit(DrawImage, Featuremask)
         except Exception as e:

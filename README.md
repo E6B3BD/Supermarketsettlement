@@ -412,4 +412,39 @@ InferenceManager.submit_frame()   run() → Seg+Track+Cls      on_result() 显�
 放入线程池队列                  处理完成后 emit 信号         接收信号，更新 label
 ```
 
-前后分离模式
+将后处理推到GPU
+
+```
+pip install -i https://mirrors.aliyun.com/pypi/simple/ cupy-cuda11x --trusted-host mirrors.aliyun.com
+```
+
+```
+pip install -i https://mirrors.aliyun.com/pypi/simple/ cucim --trusted-host mirrors.aliyun.com
+```
+
+```
+import cupy as cp
+import cucim as cc
+
+print("CuPy version:", cp.__version__)
+print("CuPy CUDA version:", cp.cuda.runtime.runtimeGetVersion())
+
+# 创建一个简单的 GPU 数组
+x = cp.array([1, 2, 3])
+print("CuPy array:", x)
+print("Is x on GPU?", isinstance(x, cp.ndarray))
+
+# 测试 cucim
+import numpy as np
+data = np.random.rand(128, 128).astype(np.float32)
+data_gpu = cp.asarray(data)
+transformed = cc.skimage.transform.rotate(data_gpu, angle=45)
+print("cucim rotate test passed. Output shape:", transformed.shape)
+```
+
+torch
+
+```
+pip install kornia -i https://mirrors.aliyun.com/pypi/simple/ --trusted-host mirrors.aliyun.com
+```
+

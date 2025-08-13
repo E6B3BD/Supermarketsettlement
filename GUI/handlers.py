@@ -6,7 +6,7 @@ current_dir = os.path.dirname(os.path.abspath(__file__)) # 获取当前文件所
 parent_dir = os.path.dirname(current_dir)  # 就是 project_root
 sys.path.append(parent_dir) # 将项目根目录加入 Python 模块搜索路径
 
-from segmentation.yolo_segment import SegModel
+from inference.segmentation.yolo_segment import SegModel
 
 
 from PySide2.QtCore import QObject
@@ -110,20 +110,20 @@ class AppHandlers(QObject):
 
 
 
-        DrawImage, Featuremask = self.model.SegImg(frame)
-        self.on_seg_done(DrawImage,Featuremask)
+        #DrawImage, Featuremask = self.model.SegImg(frame)
+        #self.on_seg_done(DrawImage,Featuremask)
 
         # 如果卡断 将代码打开
         # 防堆积：如果子线程还在跑，跳过这一帧
-        # if self.threadpool.activeThreadCount() > 0:
-        #     self.log.info("跳帧")
-        #     return
-        # worker = SegWorker(self.model, frame)   # 将模型和帧
+        if self.threadpool.activeThreadCount() > 0:
+             self.log.info("跳帧")
+             return
+        worker = SegWorker(self.model, frame)   # 将模型和帧
         # # 连接信号：结果回来时更新 UI
-        # worker.signals.result_ready.connect(self.on_seg_done)
-        # worker.signals.error_occurred.connect(self.on_seg_error)
+        worker.signals.result_ready.connect(self.on_seg_done)
+        worker.signals.error_occurred.connect(self.on_seg_error)
         # # 线程池自动分配线程
-        # self.threadpool.start(worker)
+        self.threadpool.start(worker)
 
     def on_seg_done(self, DrawImage, Featuremask):
         """

@@ -1,0 +1,96 @@
+/* 全局背景和字体 */
+QWidget {
+    background-color: #1E1E1E;
+    color: #E0E0E0;
+    font-family: "Microsoft YaHei", sans-serif;
+    font-size: 14px;
+}
+
+/* 顶部按钮 */
+QPushButton {
+    background-color: #2D2D30;
+    border: 1px solid #3C3C3C;
+    border-radius: 6px;
+    padding: 6px 12px;
+}
+QPushButton:hover {
+    background-color: #3E3E42;
+    border: 1px solid #5A5A5A;
+}
+QPushButton:pressed {
+    background-color: #007ACC;
+    border: 1px solid #007ACC;
+    color: white;
+}
+/* QTreeWidget 表头 */
+QHeaderView::section {
+    background-color: #2D2D30;
+    color: #E0E0E0;
+    padding: 4px;
+    border: 1px solid #3C3C3C;
+    font-weight: bold;
+    font-size: 13px;
+}
+
+QHeaderView::section:hover {
+    background-color: #3E3E42;
+}
+
+/* 禁用分隔线虚线 */
+QHeaderView {
+    background-color: #2D2D30;
+    border: none;
+}
+
+
+
+/* QTreeWidget */
+QTreeWidget {
+    background-color: #1E1E1E;
+    border: 1px solid #3C3C3C;
+    gridline-color: #3C3C3C;
+}
+QTreeWidget::item {
+    height: 28px;
+}
+QTreeWidget::item:selected {
+    background-color: #264F78;
+    color: white;
+}
+
+/* QLabel 显示视频 */
+QLabel#discernlabel, QLabel#label_2 {
+    background-color: black;
+    border: 1px solid #3C3C3C;
+}
+
+/* QLineEdit 输入框 */
+QLineEdit {
+    background-color: #1E1E1E;
+    border: 1px solid #3C3C3C;
+    border-radius: 4px;
+    padding: 4px;
+    color: #E0E0E0;
+}
+QLineEdit:focus {
+    border: 1px solid #007ACC;
+}
+
+/* QRadioButton */
+QRadioButton {
+    spacing: 6px;
+}
+QRadioButton::indicator {
+    width: 14px;
+    height: 14px;
+}
+QRadioButton::indicator:unchecked {
+    border: 1px solid #A0A0A0;
+    border-radius: 7px;
+    background: none;
+}
+QRadioButton::indicator:checked {
+    border: 1px solid #007ACC;
+    border-radius: 7px;
+    background: #007ACC;
+}

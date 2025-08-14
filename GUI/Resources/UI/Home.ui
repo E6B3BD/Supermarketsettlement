@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1434</width>
-    <height>703</height>
+    <height>780</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -82,7 +82,7 @@
    <item row="1" column="0">
     <widget class="QStackedWidget" name="stackedWidget">
      <property name="currentIndex">
-      <number>0</number>
+      <number>1</number>
      </property>
      <widget class="QWidget" name="page">
       <layout class="QGridLayout" name="gridLayout_6">
@@ -204,7 +204,7 @@
            <widget class="QVideoWidget" name="widget_4" native="true">
             <layout class="QGridLayout" name="gridLayout_10">
              <item row="0" column="0">
-              <widget class="QLabel" name="label_2">
+              <widget class="QLabel" name="register_2">
                <property name="minimumSize">
                 <size>
                  <width>1024</width>
@@ -235,7 +235,7 @@
          </property>
          <layout class="QGridLayout" name="gridLayout_5">
           <item row="0" column="0">
-           <widget class="QLabel" name="label_6">
+           <widget class="QLabel" name="feature">
             <property name="minimumSize">
              <size>
               <width>0</width>

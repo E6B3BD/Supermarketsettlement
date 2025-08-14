@@ -1,0 +1,2 @@
+DenseNet:
+  "model_path": "I:\python-Code\Supermarketsettlement\inference\models\DenseNet169"

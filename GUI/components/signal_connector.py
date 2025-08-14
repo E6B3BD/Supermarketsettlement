@@ -7,7 +7,5 @@ def connect_signals(window, handlers):
     # 管理界面
     window.Administrator.clicked.connect(handlers.setup_navigation)
 
-    # 加载视频 Loadvideo
-    window.openvideo_1.clicked.connect(handlers.Loadvideo) # 用户
-    window.openvideo_2.clicked.connect(handlers.Loadvideo) # 管理
+
 

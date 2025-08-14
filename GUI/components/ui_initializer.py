@@ -5,6 +5,9 @@ def initialize_ui(window):
 
     # 默认为第一界面
     window.stackedWidget.setCurrentIndex(0)
+    # 默认关闭
+    window.radioButton_2.setChecked(True)
+
 
 
 

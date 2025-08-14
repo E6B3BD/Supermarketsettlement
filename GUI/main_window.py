@@ -30,7 +30,7 @@ class Window:
         # 控件的初始化
         initialize_ui(self.ui)
         self.handlers = AppHandlers(self.ui)
-        # 槽函数的绑定 还存在问题
+        # 槽函数的绑定
         connect_signals(self.ui,self.handlers)
 
     def show(self):

@@ -29,13 +29,9 @@ class SegModel():
             tracker="./botsort.yaml",
             imgsz=640 ,  # 输入尺寸
             conf=0.9,  # 置信度阈值
-            # iou=0.5,  # NMS 阈值
             device='cuda',  # 使用 GPU
-            # max_det=15,
             verbose=False,
-            # mode='track',
-            # retina_masks=True,
-            # half=True,
+            retina_masks=True,
         )[0]
         if len(output.boxes) < 0:  # 有检测结果才保存
             return Img, None

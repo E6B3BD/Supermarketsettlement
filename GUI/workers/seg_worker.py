@@ -1,7 +1,7 @@
 from PySide2.QtCore import QRunnable, Slot, QObject, Signal
 import cv2
 from PySide2.QtGui import QImage, QPixmap
-
+import uuid
 
 from logs.logger import DailyLogger
 class SegWorkerSignals(QObject):
@@ -14,7 +14,7 @@ class SegWorkerSignals(QObject):
 
 
 class SegWorker(QRunnable):
-    def __init__(self, model, frame, source_widget=None):
+    def __init__(self, model, frame):
         super().__init__()
         self.model = model          # SegModel 实例
         self.frame = frame          # 要处理的帧
@@ -27,7 +27,6 @@ class SegWorker(QRunnable):
         try:
             # 调用模型推理
             DrawImage, output = self.model.SegImg(self.frame)
-
             # ✅ 在子线程中完成图像预处理（利用空闲 GPU/CPU）
             resized = cv2.resize(DrawImage, (1024, 576))
             rgb = cv2.cvtColor(resized, cv2.COLOR_BGR2RGB)

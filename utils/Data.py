@@ -23,23 +23,23 @@ class Feature_Dataset(Dataset):
             img_path = os.path.join(data_path, cls)
             for img in os.listdir(img_path):
                 img_data_path = os.path.join(img_path, img)
-                self.datasets.append((img_data_path, cls))
+                self.datasets.append((img_data_path, cls)) # 同一个类别 同一个数据集
     def __len__(self):
         return len(self.datasets)
     def __getitem__(self, index):
         # 处理单个图片
         img_path, label = self.datasets[index]
         # OpenCV 默认读取为 BGR，而 transform 是基于 RGB 的 PIL 图像
-        img = cv2.imread(img_path)
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        images = cv2.imread(img_path)
+        images = cv2.cvtColor(images, cv2.COLOR_BGR2RGB)
         # 做数据增强处理 如果不传入就只做个简单的处理
         if self.transform is not None:
-            img = self.transform(img)
+            images = self.transform(images)
         else:
-            img = transforms.ToTensor()(img)
+            images = transforms.ToTensor()(images)
         # 将字符串类别转为整数索引
-        label_idx = self.class_to_idx[label]
-        return img, label_idx
+        lables = self.class_to_idx[label]
+        return images, lables
 
 if __name__=='__main__':
-    pass
+    Feature_Dataset(r"I:\python-Code\DATA\data",True)

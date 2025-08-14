@@ -1,6 +1,7 @@
 # 图像预测模块
 import cv2
 import numpy as np
+import os
 import torch
 
 import cv2
@@ -48,7 +49,7 @@ from utils.cfg import colors_dict
 #     # cv2.imwrite(f"mask.png", rotate)
 #     return rotate
 
-
+PATH=r"I:\python-Code\Supermarketsettlement\DATA\dataset"
 
 # 减少重复操作 速度快这是导致速度卡顿的最大问题
 def aligning(mask, point):
@@ -100,24 +101,21 @@ def Drawsegmentation(image,result):
 
 
 
-def Alignat(frame, output):
+def Alignat(output):
     MaskList=[]
     if output.masks is None:
         return
+    frame = output.orig_img
     masks_data = output.masks.data.cpu().numpy()  # [N, H, W]
     for mask in masks_data:
-
-
         # --- 1. 获取原始 mask ---
         mask = (mask * 255).astype(np.uint8)
         mask = np.clip(mask, 0, 255)
-
         # --- 2. 后处理：形态学操作补全 ---
         kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
         mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)  # 闭运算
         mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)  # 开运算
         mask = cv2.dilate(mask, kernel, iterations=1)  # 轻微膨胀
-
         # --- 3. 获取最小外接矩形用于旋转校正 ---
         contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         if len(contours) == 0:
@@ -125,46 +123,98 @@ def Alignat(frame, output):
         largest_contour = max(contours, key=cv2.contourArea)
         rect = cv2.minAreaRect(largest_contour)
         center, size, angle = rect
-
         # --- 4. 旋转图像和 mask ---
         M = cv2.getRotationMatrix2D(center, angle, 1.0)
         h, w = frame.shape[:2]
         rotated_frame = cv2.warpAffine(frame, M, (w, h), flags=cv2.INTER_LINEAR, borderValue=0)
         rotated_mask = cv2.warpAffine(mask, M, (w, h), flags=cv2.INTER_NEAREST, borderValue=0)
-
         # --- 5. 旋转后重新获取边界框 ---
         contours_rot, _ = cv2.findContours(rotated_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         if len(contours_rot) == 0:
             continue
         largest_rot = max(contours_rot, key=cv2.contourArea)
         x, y, w, h = cv2.boundingRect(largest_rot)
-
         # --- 6. 裁剪 ---
         cropped_img = rotated_frame[y:y + h, x:x + w]
         cropped_mask = rotated_mask[y:y + h, x:x + w]
-
         # --- 7. 应用 mask，背景为黑 ---
         fg = cv2.bitwise_and(cropped_img, cropped_img, mask=cropped_mask)
         bg_black = np.zeros_like(fg)
         combined = cv2.add(fg, bg_black)
-
         # --- 8. resize 到 384x384 ---
         final_size = 384
         h_c, w_c = combined.shape[:2]
         ratio = min(final_size / w_c, final_size / h_c)
         new_w, new_h = int(w_c * ratio), int(h_c * ratio)
         resized = cv2.resize(combined, (new_w, new_h), interpolation=cv2.INTER_AREA)
-
         canvas = np.zeros((final_size, final_size, 3), dtype=np.uint8)
         start_x = (final_size - new_w) // 2
         start_y = (final_size - new_h) // 2
         canvas[start_y:start_y + new_h, start_x:start_x + new_w] = resized
         # cv2.imwrite(f"I:\python-Code\Supermarketsettlement\DATA\F\{uuid.uuid4()}.png", canvas)
-
         MaskList.append(canvas)
-
         return MaskList
 
+
+
+def extractiondata(output):
+    if output.masks is None:
+        return
+    frame = output.orig_img
+    masks_data = output.masks.data.cpu().numpy()  # [N, H, W]
+    classes = output.boxes.cls.cpu().numpy()
+    names = output.names
+    for i in range(len(masks_data)):
+        cls = classes[i]
+        name = names[int(cls)]
+        # --- 1. 获取原始 mask ---
+        mask = masks_data[i]
+        mask = (mask * 255).astype(np.uint8)
+        mask = np.clip(mask, 0, 255)
+        # --- 2. 后处理：形态学操作补全 ---
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
+        mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)  # 闭运算
+        mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)  # 开运算
+        mask = cv2.dilate(mask, kernel, iterations=1)  # 轻微膨胀
+        # --- 3. 获取最小外接矩形用于旋转校正 ---
+        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        if len(contours) == 0:
+            continue
+        largest_contour = max(contours, key=cv2.contourArea)
+        rect = cv2.minAreaRect(largest_contour)
+        center, size, angle = rect
+        # --- 4. 旋转图像和 mask ---
+        M = cv2.getRotationMatrix2D(center, angle, 1.0)
+        h, w = frame.shape[:2]
+        rotated_frame = cv2.warpAffine(frame, M, (w, h), flags=cv2.INTER_LINEAR, borderValue=0)
+        rotated_mask = cv2.warpAffine(mask, M, (w, h), flags=cv2.INTER_NEAREST, borderValue=0)
+        # --- 5. 旋转后重新获取边界框 ---
+        contours_rot, _ = cv2.findContours(rotated_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        if len(contours_rot) == 0:
+            continue
+        largest_rot = max(contours_rot, key=cv2.contourArea)
+        x, y, w, h = cv2.boundingRect(largest_rot)
+        # --- 6. 裁剪 ---
+        cropped_img = rotated_frame[y:y + h, x:x + w]
+        cropped_mask = rotated_mask[y:y + h, x:x + w]
+        # --- 7. 应用 mask，背景为黑 ---
+        fg = cv2.bitwise_and(cropped_img, cropped_img, mask=cropped_mask)
+        bg_black = np.zeros_like(fg)
+        combined = cv2.add(fg, bg_black)
+        # --- 8. resize 到 384x384 ---
+        final_size = 384
+        h_c, w_c = combined.shape[:2]
+        ratio = min(final_size / w_c, final_size / h_c)
+        new_w, new_h = int(w_c * ratio), int(h_c * ratio)
+        resized = cv2.resize(combined, (new_w, new_h), interpolation=cv2.INTER_AREA)
+        canvas = np.zeros((final_size, final_size, 3), dtype=np.uint8)
+        start_x = (final_size - new_w) // 2
+        start_y = (final_size - new_h) // 2
+        canvas[start_y:start_y + new_h, start_x:start_x + new_w] = resized
+        # --- 9. 保存 ---
+        path = os.path.join(PATH, name)
+        cv2.imwrite(f"{path}/{uuid.uuid4()}.png", canvas)
+        return []
 
 
 

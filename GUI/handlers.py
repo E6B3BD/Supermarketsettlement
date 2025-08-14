@@ -25,7 +25,7 @@ from logs.logger import DailyLogger
 
 # 视频源
 from .video_channel import VideoChannel
-
+from utils.state import status
 
 
 
@@ -38,8 +38,8 @@ class AppHandlers(QObject):
         self.log=DailyLogger("UI事件管理器")
 
         # ✅ 持有 VideoChannel 实例
-        self.user_channel = VideoChannel(self.ui.discernlabel,self.ui)  # 用户通道
-        self.admin_channel = VideoChannel(self.ui.register_2,self.ui)  # 管理通道
+        self.user_channel = VideoChannel(self.ui.discernlabel,self.ui,status.USER)  # 用户通道
+        self.admin_channel = VideoChannel(self.ui.register_2,self.ui,status.Administrator)  # 管理通道
         # 连接按钮
         self.ui.openvideo_1.clicked.connect(self.user_channel.Loadvideo)
         self.ui.openvideo_2.clicked.connect(self.admin_channel.Loadvideo)
@@ -54,7 +54,6 @@ class AppHandlers(QObject):
         if sender in nav_map:
             index = nav_map[sender]
             self.ui.stackedWidget.setCurrentIndex(index)
-    #
 
 
 

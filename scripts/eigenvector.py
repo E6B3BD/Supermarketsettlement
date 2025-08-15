@@ -123,11 +123,9 @@ class Feature():
                 image, lable = images.to(self.device), lables.to(self.device)
                 # 提取主干网络特征
                 features = self.model(image)
-
                 # 保存特征和标签用于距离计算
                 all_features.append(features.cpu())
                 all_labels.append(lable.cpu())
-
                 #  Arc计算logits
                 logits = self.Arcface(features)
                 # 计算损失
@@ -150,17 +148,13 @@ class Feature():
         )
 
 
-
-
-
-
 if __name__=="__main__":
 
     data_path = r'I:\python-Code\DATA\good_good_data\good_good_data\bag'
     Model = Feature(Data_path=data_path)
-    for epoch in range(100):
+    for epoch in range(200):
         Model.Train(epoch)
         Model.Test(epoch)
         # 保存模型
-        torch.save(Model.model.state_dict(), r'I:\python-Code\Supermarketsettlement\scripts\runs\models\best.pt')
+        torch.save(Model.model.state_dict(), r'I:\python-Code\Supermarketsettlement\scripts\runs\models\bag\best.pt')
 

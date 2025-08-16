@@ -5,8 +5,8 @@ from utils.state import status
 from logs.logger import DailyLogger
 from .signal_connector import setup_video_control
 from  inference.Featureclassify.diagnosis_reasoning import SymptomToDiseaseMapper
-from database.db_manager import DataBASE
-
+# from database.db_manager import DataBASE
+from database.product_service import ProductService
 class Register:
     MAX_FEATURES = 50
     SKIP_INTERVAL = 1
@@ -24,7 +24,7 @@ class Register:
         self.ui.feature.setAlignment(Qt.AlignCenter)
         self._show_placeholder()
         self.models=SymptomToDiseaseMapper()
-        self.dataset=DataBASE()
+        self.dataset=ProductService()
 
 
 

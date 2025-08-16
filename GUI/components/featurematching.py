@@ -6,8 +6,11 @@ import torch
 from utils.Net import FeatureNet
 from utils.cfg import MODEL_PATH
 
-from database.db_manager import DataBASE
+
 from .Table import Tablewiget
+
+# from database.db_manager import DataBASE
+from database.product_service import ProductService
 
 
 
@@ -25,7 +28,7 @@ class FeatureMatching:
         # 加载模型
         self.Loadmodel()
         # 数据库
-        self.dataset=DataBASE()
+        self.dataset=ProductService()
         self.Tab=Tablewiget(ui)
 
 

@@ -27,11 +27,11 @@ from logs.logger import DailyLogger
 from .video_channel import VideoChannel
 from utils.state import status
 
+from .components.signal_connector import Userbinding
+
 
 
 class AppHandlers(QObject):
-
-
     def __init__(self,ui):
         super().__init__()
         self.ui = ui  # 拿到主界面引用，可以操作所有控件
@@ -39,10 +39,13 @@ class AppHandlers(QObject):
 
         # ✅ 持有 VideoChannel 实例
         self.user_channel = VideoChannel(self.ui.discernlabel,self.ui,status.USER)  # 用户通道
+        Userbinding( self.user_channel,self.ui)
+
         self.admin_channel = VideoChannel(self.ui.register_2,self.ui,status.Administrator)  # 管理通道
         # 连接按钮
         self.ui.openvideo_1.clicked.connect(self.user_channel.Loadvideo)
         self.ui.openvideo_2.clicked.connect(self.admin_channel.Loadvideo)
+
 
     # 界面的切换
     def setup_navigation(self):

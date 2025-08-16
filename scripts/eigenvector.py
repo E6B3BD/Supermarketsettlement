@@ -67,27 +67,23 @@ def calculate_intra_inter_distance(features, labels, metric='distance'):
 
 
 class Feature():
-    def __init__(self,Data_path,epochs=500,embedding_size=512, num_classes=7,batch_size=64):
+    def __init__(self,Data_path,epochs=500,embedding_size=512, num_classes=7,batch_size=10):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model=FeatureNet().to(self.device)
         # ArcFace
         self.Arcface = ArcFace(embedding_size,num_classes).to(self.device)
         self.epochs = epochs
-        self.loss_func=nn.NLLLoss()
+        self.loss_func=nn.CrossEntropyLoss()
 
 
         # 优化器
-        self.OptNet = torch.optim.SGD(self.model.parameters(), lr=1e-2, momentum=0.9, weight_decay=5e-4,
-                                      nesterov=True)
-        self.OptArc = torch.optim.SGD(self.Arcface.parameters(), lr=1e-2, momentum=0.9, weight_decay=5e-4,
-                                      nesterov=True)
+        self.OptNet = torch.optim.Adam(self.model.parameters(), lr=1e-4)
+        self.OptArc = torch.optim.Adam(self.Arcface.parameters(), lr=1e-3)
 
         self.TrainLoader = DataLoader(Feature_Dataset(Data_path, True,transform),
-                                      batch_size=batch_size, shuffle=True,
-                                      num_workers=2, pin_memory=True, drop_last=True)
+                                      batch_size=batch_size, shuffle=True)
         self.TestLoader = DataLoader(Feature_Dataset(Data_path, False,transform),
-                                     batch_size=batch_size, shuffle=False,
-                                     num_workers=2, pin_memory=True, drop_last=False)
+                                     batch_size=batch_size, shuffle=False)
 
 
     def Train(self,epoch):
@@ -97,10 +93,10 @@ class Feature():
         for images,lables in tqdm(self.TrainLoader):
             image,lable=images.to(self.device),lables.to(self.device)
             # 向前传播
-            Netout=self.model(image)
-            Arcout=self.Arcface(Netout)
+            feat=self.model(image)
+            logits=self.Arcface(feat,lable)
             # 计算损失
-            loss=self.loss_func(Arcout,lable)
+            loss=self.loss_func(logits,lable)
             # 反向
             self.OptNet.zero_grad()
             self.OptArc.zero_grad()
@@ -127,13 +123,15 @@ class Feature():
                 all_features.append(features.cpu())
                 all_labels.append(lable.cpu())
                 #  Arc计算logits
-                logits = self.Arcface(features)
+                logits = self.Arcface(features,lable)
+
                 # 计算损失
                 loss = self.loss_func(logits, lable)
                 # 反向
                 # 计算准确度
                 pred = torch.argmax(logits, dim=1)
                 acc = torch.mean((pred == lable).float())
+
                 AVGloss.append(acc.item())
                 Testloss.append(loss.item())
         # 合并所有特征和标签
@@ -152,7 +150,7 @@ if __name__=="__main__":
 
     data_path = r'I:\python-Code\DATA\good_good_data\good_good_data\bag'
     Model = Feature(Data_path=data_path)
-    for epoch in range(200):
+    for epoch in range(100):
         Model.Train(epoch)
         Model.Test(epoch)
         # 保存模型

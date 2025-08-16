@@ -7,23 +7,17 @@ import cv2
 class Feature_Dataset(Dataset):
     def __init__(self, root, train=True, transform=None):
         super().__init__()
+        self.transform=transform
         # 存储图片数据和lablel
         self.datasets = []
         # 存储类别到数字的映射
-        self.class_to_idx = {}
-        self.transform = transform
-        # 拼接路劲
-        sub_dir = 'train' if train else 'test'
-        data_path = os.path.join(root, sub_dir)
-        # 做个排序提高标签映射的鲁棒性
-        classes = sorted(os.listdir(data_path))
-        for idx, cls in enumerate(classes):
-            # 建立类别与数字的映射关系
-            self.class_to_idx[cls] = idx
-            img_path = os.path.join(data_path, cls)
-            for img in os.listdir(img_path):
-                img_data_path = os.path.join(img_path, img)
-                self.datasets.append((img_data_path, cls)) # 同一个类别 同一个数据集
+        sub_dir="train" if train else "test"
+        for target in os.listdir(os.path.join(root,sub_dir)):
+            target_path =os.path.join(root,sub_dir,target)
+            for img_name in os.listdir(target_path):
+                img_path=os.path.join(target_path,img_name)
+                self.datasets.append((img_path,target))
+
     def __len__(self):
         return len(self.datasets)
     def __getitem__(self, index):
@@ -38,7 +32,7 @@ class Feature_Dataset(Dataset):
         else:
             images = transforms.ToTensor()(images)
         # 将字符串类别转为整数索引
-        lables = self.class_to_idx[label]
+        lables =int(label)
         return images, lables
 
 if __name__=='__main__':

@@ -27,7 +27,7 @@ class SegModel():
             source=Img,  # 输入图像
             persist=True,  # 必须：跨帧持续追踪
             tracker="./botsort.yaml",
-            imgsz=640 ,  # 输入尺寸
+            imgsz=1280 ,  # 输入尺寸
             conf=0.9,  # 置信度阈值
             device='cuda',  # 使用 GPU
             verbose=False,

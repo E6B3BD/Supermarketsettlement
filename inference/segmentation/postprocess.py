@@ -102,12 +102,165 @@ def Drawsegmentation(image,result):
 
 
 def Alignat(output):
-    MaskList=[]
+    """
+    返回: List[np.ndarray] (每个元素是 384x384 的 RGB 裁剪图)
+    无目标时返回 []
+    仅接收一个参数: output
+    """
+    # 内部常量（需要改路径可在此处修改）
+    SAVE_DIR   = r"I:\python-Code\Supermarketsettlement\DATA\F"
+    FINAL_SIZE = 384
+    MIN_AREA   = 80           # 过滤过小噪点
+    KSIZE      = 3            # 形态学内核
+    DILATE_ITR = 1            # 轻微膨胀
+    FALLBACK_TO_BBOX = True   # 无 mask 时回退到 bbox
+    MaskList = []
+    # 1) 取原图
+    frame = getattr(output, "orig_img", None)
+    if frame is None:
+        return MaskList
+    H, W = frame.shape[:2]
+    # 2) 类名与类别ID
+    names = getattr(output, "names", None)
+    classes = None
+    if hasattr(output, "boxes") and getattr(output.boxes, "cls", None) is not None:
+        try:
+            classes = output.boxes.cls.detach().cpu().numpy().astype(np.int64)
+        except Exception:
+            try:
+                classes = output.boxes.cls.cpu().numpy().astype(np.int64)
+            except Exception:
+                classes = None
+    # 3) 取 masks（若有）
+    masks_data = None
+    if hasattr(output, "masks") and output.masks is not None and hasattr(output.masks, "data"):
+        try:
+            masks_data = output.masks.data.detach().cpu().numpy()  # [N,H,W]
+        except Exception:
+            try:
+                masks_data = output.masks.data.cpu().numpy()
+            except Exception:
+                masks_data = None
+    # 4) 优先走 mask 流程
+    if masks_data is not None and len(masks_data) > 0:
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (KSIZE, KSIZE))
+        for i, m in enumerate(masks_data):
+            # 二值化 + 形态学
+            m = (m > 0.5).astype(np.uint8) * 255
+            m = cv2.morphologyEx(m, cv2.MORPH_CLOSE, kernel)
+            m = cv2.morphologyEx(m, cv2.MORPH_OPEN,  kernel)
+            if DILATE_ITR > 0:
+                m = cv2.dilate(m, kernel, iterations=DILATE_ITR)
+            cnts, _ = cv2.findContours(m, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            if not cnts:
+                continue
+            cnt = max(cnts, key=cv2.contourArea)
+            if cv2.contourArea(cnt) < MIN_AREA:
+                continue
+            # 最小外接矩形 + 角度修正
+            (cx, cy), (rw, rh), ang = cv2.minAreaRect(cnt)
+            if rw < rh:
+                ang += 90.0
+            # 旋转对齐
+            M = cv2.getRotationMatrix2D((cx, cy), ang, 1.0)
+            rotated_frame = cv2.warpAffine(frame, M, (W, H), flags=cv2.INTER_LINEAR,  borderValue=0)
+            rotated_mask  = cv2.warpAffine(m,     M, (W, H), flags=cv2.INTER_NEAREST, borderValue=0)
+            # 旋转后再取外接框裁剪
+            cnts2, _ = cv2.findContours(rotated_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            if not cnts2:
+                continue
+            x, y, w, h = cv2.boundingRect(max(cnts2, key=cv2.contourArea))
+            x2, y2 = x + w, y + h
+            x, y = max(0, x), max(0, y)
+            x2, y2 = min(W, x2), min(H, y2)
+            if x2 <= x or y2 <= y:
+                continue
+            crop_img  = rotated_frame[y:y2, x:x2]
+            crop_mask = rotated_mask[y:y2, x:x2]
+            if crop_img.size == 0:
+                continue
+            # 应用 mask
+            fg = cv2.bitwise_and(crop_img, crop_img, mask=crop_mask)
+            h_c, w_c = fg.shape[:2]
+            if h_c == 0 or w_c == 0:
+                continue
+            # 居中缩放到正方形
+            ratio = min(FINAL_SIZE / w_c, FINAL_SIZE / h_c)
+            new_w, new_h = max(1, int(w_c * ratio)), max(1, int(h_c * ratio))
+            resized = cv2.resize(fg, (new_w, new_h), interpolation=cv2.INTER_AREA)
+            canvas = np.zeros((FINAL_SIZE, FINAL_SIZE, 3), dtype=np.uint8)
+            sx, sy = (FINAL_SIZE - new_w) // 2, (FINAL_SIZE - new_h) // 2
+            canvas[sy:sy + new_h, sx:sx + new_w] = resized
+            # 文件前缀（类名）
+            prefix = ""
+            if names is not None and classes is not None and i < len(classes):
+                cls_i = int(classes[i])
+                if isinstance(names, dict):
+                    prefix = f"{names.get(cls_i, str(cls_i))}_"
+                else:
+                    try:    prefix = f"{names[cls_i]}_"
+                    except: prefix = f"{cls_i}_"
+            # 保存
+            try:
+                os.makedirs(SAVE_DIR, exist_ok=True)
+                cv2.imwrite(os.path.join(SAVE_DIR, f"{prefix}{uuid.uuid4()}.png"), canvas)
+            except Exception:
+                pass
+            MaskList.append(canvas)
+    # 5) 回退到 bbox：当前帧没有成功用 mask 裁到任何目标时
+    if (not MaskList) and FALLBACK_TO_BBOX and hasattr(output, "boxes") and getattr(output.boxes, "xyxy", None) is not None:
+        try:
+            boxes = output.boxes.xyxy.detach().cpu().numpy().astype(np.int32)
+        except Exception:
+            try:
+                boxes = output.boxes.xyxy.cpu().numpy().astype(np.int32)
+            except Exception:
+                boxes = None
+        if boxes is not None:
+            for i, (x1, y1, x2, y2) in enumerate(boxes):
+                x1, y1 = max(0, int(x1)), max(0, int(y1))
+                x2, y2 = min(W, int(x2)), min(H, int(y2))
+                if x2 <= x1 or y2 <= y1:
+                    continue
+                crop = frame[y1:y2, x1:x2]
+                if crop.size == 0:
+                    continue
+                # 居中缩放到正方形
+                h_c, w_c = crop.shape[:2]
+                ratio = min(FINAL_SIZE / w_c, FINAL_SIZE / h_c)
+                new_w, new_h = max(1, int(w_c * ratio)), max(1, int(h_c * ratio))
+                resized = cv2.resize(crop, (new_w, new_h), interpolation=cv2.INTER_AREA)
+                canvas = np.zeros((FINAL_SIZE, FINAL_SIZE, 3), dtype=np.uint8)
+                sx, sy = (FINAL_SIZE - new_w) // 2, (FINAL_SIZE - new_h) // 2
+                canvas[sy:sy + new_h, sx:sx + new_w] = resized
+                prefix = ""
+                if names is not None and classes is not None and i < len(classes):
+                    cls_i = int(classes[i])
+                    if isinstance(names, dict):
+                        prefix = f"{names.get(cls_i, str(cls_i))}_"
+                    else:
+                        try:    prefix = f"{names[cls_i]}_"
+                        except: prefix = f"{cls_i}_"
+                try:
+                    os.makedirs(SAVE_DIR, exist_ok=True)
+                    cv2.imwrite(os.path.join(SAVE_DIR, f"{prefix}{uuid.uuid4()}.png"), canvas)
+                except Exception:
+                    pass
+                MaskList.append((canvas,prefix))
+    # 6) 始终返回 list（可能为空）
+    return MaskList
+
+
+
+def optimizeAlignat(output):
+    MaskList = []
     if output.masks is None:
         return
     frame = output.orig_img
+    names = output.names
+    classes = output.boxes.cls.cpu().numpy()
     masks_data = output.masks.data.cpu().numpy()  # [N, H, W]
-    for mask in masks_data:
+    for index, mask in enumerate(masks_data):
         # --- 1. 获取原始 mask ---
         mask = (mask * 255).astype(np.uint8)
         mask = np.clip(mask, 0, 255)
@@ -151,7 +304,8 @@ def Alignat(output):
         start_x = (final_size - new_w) // 2
         start_y = (final_size - new_h) // 2
         canvas[start_y:start_y + new_h, start_x:start_x + new_w] = resized
-        # cv2.imwrite(f"I:\python-Code\Supermarketsettlement\DATA\F\{uuid.uuid4()}.png", canvas)
+        name = names[classes[index]]
+        cv2.imwrite(f"I:\python-Code\Supermarketsettlement\DATA\F\{name}_{uuid.uuid4()}.png", canvas)
         MaskList.append(canvas)
         return MaskList
 

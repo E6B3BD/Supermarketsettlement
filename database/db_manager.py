@@ -7,7 +7,7 @@ import numpy as np
 
 # 导入本地包
 from logs.logger import DailyLogger
-from Qdrant import Qdrant
+from .Qdrant import Qdrant
 
 class DataBASE():
     def __init__(self):

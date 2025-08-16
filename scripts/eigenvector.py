@@ -67,7 +67,7 @@ def calculate_intra_inter_distance(features, labels, metric='distance'):
 
 
 class Feature():
-    def __init__(self,Data_path,epochs=500,embedding_size=512, num_classes=7,batch_size=10):
+    def __init__(self,Data_path,epochs=500,embedding_size=512, num_classes=6,batch_size=10):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model=FeatureNet().to(self.device)
         # ArcFace
@@ -148,11 +148,11 @@ class Feature():
 
 if __name__=="__main__":
 
-    data_path = r'I:\python-Code\DATA\good_good_data\good_good_data\bag'
+    data_path = r'I:\python-Code\DATA\good_good_data\good_good_data\can'
     Model = Feature(Data_path=data_path)
-    for epoch in range(100):
+    for epoch in range(50):
         Model.Train(epoch)
         Model.Test(epoch)
         # 保存模型
-        torch.save(Model.model.state_dict(), r'I:\python-Code\Supermarketsettlement\scripts\runs\models\bag\best.pt')
+        torch.save(Model.model.state_dict(), r'I:\python-Code\Supermarketsettlement\scripts\runs\models\can\best.pt')
 

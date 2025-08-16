@@ -31,18 +31,48 @@ from .components.signal_connector import Userbinding
 
 
 
+# 特征注册（职责下放到独立模块）
+from .components.Registerimage import Register
+from .components.featurematching import FeatureMatching
+
+
+
 class AppHandlers(QObject):
+    """
+       职责：事件路由/绑定
+       - 负责实例化 VideoChannel
+       - 负责把 VC 的结果路由到对应功能模块（如 Register）
+       - 负责把按钮的“特征浏览”操作委托给 Register（通过 VC 的 delegate wrapper）
+       """
     def __init__(self,ui):
         super().__init__()
         self.ui = ui  # 拿到主界面引用，可以操作所有控件
         self.log=DailyLogger("UI事件管理器")
 
-        # ✅ 持有 VideoChannel 实例
-        self.user_channel = VideoChannel(self.ui.discernlabel,self.ui,status.USER)  # 用户通道
-        Userbinding( self.user_channel,self.ui)
+        # 用户通道：仅播放/推理，不启用自动注册
+        self.user_channel = VideoChannel(self.ui.discernlabel,self.ui,status.USER)
 
-        self.admin_channel = VideoChannel(self.ui.register_2,self.ui,status.Administrator)  # 管理通道
-        # 连接按钮
+        # 管理员通道：启用特征注册
+        self.admin_channel = VideoChannel(self.ui.register_2,self.ui,status.Administrator)
+
+        # === 特征注册模块（仅管理员通道）===
+        self.register = Register(self.ui, status=status.Administrator)
+        # 把 VC 的后处理结果路由给 Register（只在管理员通道接）
+        self.admin_channel.postprocessed.connect(self.register.MASKkIMG)
+
+        # === 特征匹配模块（仅用户通道）===
+        self.FeatureMatching = FeatureMatching(self.ui, status=status.USER)
+        # 特征匹配
+        # self.user_channel.postprocessed.connect(self.register.aftercuremask)
+
+
+
+
+
+
+        # 测试按钮
+        Userbinding(self.user_channel, self.ui)
+        #  打开视频按钮
         self.ui.openvideo_1.clicked.connect(self.user_channel.Loadvideo)
         self.ui.openvideo_2.clicked.connect(self.admin_channel.Loadvideo)
 

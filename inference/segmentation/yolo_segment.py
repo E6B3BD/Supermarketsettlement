@@ -1,9 +1,7 @@
 from ultralytics import YOLO
 import os
+import cv2
 
-# 本地模块
-from .postprocess import aligning,contours,Drawsegmentation,Alignat
-#from postprocess import aligning,process_masks_gpu_batch,contours,Drawsegmentation
 
 
 class SegModel():
@@ -19,9 +17,7 @@ class SegModel():
         return model
     # 图像分割并扣除掩码图
     def SegImg(self,Img):
-        #Img=cv2.imread(Img) # 测试放开
-        # 单分割
-        # output = self.model(Img, conf=0.8, imgsz=640, device='cuda', verbose=False)[0]
+        # Img=cv2.imread(Img) # 测试放开
         # 推理并同时追踪
         output = self.model.track(
             source=Img,  # 输入图像
@@ -41,4 +37,4 @@ class SegModel():
 
 if __name__=="__main__":
     model=SegModel()
-    model.SegImg("0085.jpg")
+    model.SegImg(r"I:\python-Code\Supermarketsettlement\DATA\F\2c3f4a3d-3773-48aa-af99-da74841c7eec.png")

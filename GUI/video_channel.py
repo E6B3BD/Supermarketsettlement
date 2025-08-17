@@ -9,7 +9,6 @@ from utils.state import status
 from .source.camera import VideoSource, SourceType
 from .workers.seg_worker import SegWorker
 from .workers.postprocess_worker import OutputProcessorTask
-from .components.ui_initializer import VideoChannel_initialize
 from inference.segmentation.yolo_segment import SegModel
 from .components.Table import Tablewiget
 
@@ -84,7 +83,6 @@ class VideoChannel(QObject):
         self.ui = ui
         self.status = status_
         self.log = DailyLogger("视频源推流")
-        VideoChannel_initialize(self)
         self.VS = VideoSource()
         self.model = None
         self.inference_pool = QThreadPool(); self.inference_pool.setMaxThreadCount(1)

@@ -2,6 +2,8 @@
 
 ![](./GUI/Resources/Icons/home.png)
 
+![](./GUI/Resources/Icons/0001.png)
+
 基础架构
 
 ```python

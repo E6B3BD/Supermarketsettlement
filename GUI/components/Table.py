@@ -1,10 +1,12 @@
 
 from PySide2.QtWidgets import QTreeWidget, QTreeWidgetItem
+from .ui_initializer import Tableinitialization
 
 # treeWidget
 class Tablewiget():
     def __init__(self,ui):
         self.ui = ui
+        Tableinitialization(ui)
 
     def add_item(self,name, price, product_id,quantity=1,):
         """

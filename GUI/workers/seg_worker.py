@@ -28,7 +28,7 @@ class SegWorker(QRunnable):
             # 调用模型推理
             DrawImage, output = self.model.SegImg(self.frame)
             # ✅ 在子线程中完成图像预处理（利用空闲 GPU/CPU）
-            resized = cv2.resize(DrawImage, (1024, 576))
+            resized = cv2.resize(DrawImage, (1280, 720))
             rgb = cv2.cvtColor(resized, cv2.COLOR_BGR2RGB)
 
             # 在子线程中 emit 结果

@@ -10,12 +10,12 @@ def connect_signals(window, handlers):
 # 视频流控件槽函数绑定
 def setup_video_control_connections(window,owner):
     # 表格
-    window.pushButton_6.clicked.connect(owner.Table.clear_table)
+    # window.pushButton_6.clicked.connect(owner.Table.clear_table)
+    pass
 
-
-# 用户的槽函数以及？UI绑定
+# 用户的槽函数以及
 def Userbinding(owner,window):
-    window.pushButton_5.clicked.connect(owner.test)
+    window.pushButton_6.clicked.connect(owner.Tab.clear_table)
 
 
 # 特征注册
@@ -26,6 +26,8 @@ def setup_video_control(window,owner):
     window.pushButton.clicked.connect(owner.delete_current_feature)
     # 注册
     window.pushButton_14.clicked.connect(owner.login)
+    # 清空
+    window.pushButton_15.clicked.connect(owner.empty)
 
 
 

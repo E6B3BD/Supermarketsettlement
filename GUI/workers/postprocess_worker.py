@@ -25,6 +25,7 @@ class OutputProcessorTask(QRunnable):
             # 提取分类数据
             # cv2.imwrite(f"I:\python-Code\Supermarketsettlement\DATA\A\{uuid.uuid4()}.png", self.frame)
             MaskList = Alignat(self.output)
+
             # MaskList = extractiondata(self.output)
 
             self.signals.finished.emit(MaskList)

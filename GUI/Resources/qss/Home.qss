@@ -1,96 +1,368 @@
-/* 全局背景和字体 */
+/* ===============================
+   Supermarket Settlement UI — Dark Elegant QSS
+   设计基调：深色 / 低饱和 / 高对比 / 圆角
+   调色板：
+     背景 bg        #0f1115
+     面板 panel     #151a21
+     浮层 elevated  #1b2230
+     边框 line      #273244
+     文字主 text    #e5e7eb
+     次级次 text-2  #9aa4b2
+     选中 select    #1f2937
+     主色 accent    #4f46e5  (indigo)
+     成功 success   #22c55e
+     警告 warn      #f59e0b
+     危险 danger    #ef4444
+   圆角：10px；按钮高度：36px；控件内边距：10-14px
+   =============================== */
+
+/* -------- 全局字体与背景 -------- */
+* {
+  font-family: "Microsoft YaHei", "PingFang SC", "Segoe UI", "Arial";
+  font-size: 13px;
+}
+
 QWidget {
-    background-color: #1E1E1E;
-    color: #E0E0E0;
-    font-family: "Microsoft YaHei", sans-serif;
-    font-size: 14px;
+  background: #0f1115;
+  color: #e5e7eb;
 }
 
-/* 顶部按钮 */
+QWidget:disabled {
+  color: #7a8594;
+  background: #0f1115;
+}
+
+/* 让需要自绘背景的容器启用样式背景（必要时在代码里 setAttribute(Qt::WA_StyledBackground,true)） */
+QWidget#widget_2, QWidget#widget_3, QWidget#widget_5, QWidget#widget_6, QWidget#widget_7 {
+  background: transparent;
+}
+
+/* -------- 堆叠与面板 -------- */
+QStackedWidget {
+  background: #0f1115;
+  border: 1px solid #273244;
+  border-radius: 10px;
+}
+
+/* -------- GroupBox（分组框） -------- */
+QGroupBox {
+  background: #151a21;
+  border: 1px solid #273244;
+  border-radius: 12px;
+  margin-top: 18px; /* 给标题留位置 */
+}
+
+QGroupBox::title {
+  subcontrol-origin: margin;
+  left: 14px;
+  padding: 0 8px;
+  color: #cbd5e1;
+  background: #151a21;
+  font-weight: 600;
+}
+
+/* -------- 顶部导航按钮（用户/管理/数据库） -------- */
+QPushButton#user,
+QPushButton#Administrator,
+QPushButton#database {
+  min-height: 36px;
+  padding: 0 16px;
+  border-radius: 18px;
+  border: 1px solid #273244;
+  background: #1b2230;
+  color: #d1d5db;
+}
+
+QPushButton#user:hover,
+QPushButton#Administrator:hover,
+QPushButton#database:hover {
+  background: #232c3d;
+}
+
+QPushButton#user:pressed,
+QPushButton#Administrator:pressed,
+QPushButton#database:pressed {
+  background: #2a3448;
+  border-color: #334155;
+}
+
+/* -------- 通用按钮 -------- */
 QPushButton {
-    background-color: #2D2D30;
-    border: 1px solid #3C3C3C;
-    border-radius: 6px;
-    padding: 6px 12px;
+  min-height: 36px;
+  padding: 0 16px;
+  border-radius: 10px;
+  border: 1px solid #273244;
+  background: #1b2230;
+  color: #e5e7eb;
 }
+
 QPushButton:hover {
-    background-color: #3E3E42;
-    border: 1px solid #5A5A5A;
+  background: #232c3d;
 }
+
 QPushButton:pressed {
-    background-color: #007ACC;
-    border: 1px solid #007ACC;
-    color: white;
-}
-/* QTreeWidget 表头 */
-QHeaderView::section {
-    background-color: #2D2D30;
-    color: #E0E0E0;
-    padding: 4px;
-    border: 1px solid #3C3C3C;
-    font-weight: bold;
-    font-size: 13px;
+  background: #2a3448;
+  border-color: #334155;
 }
 
-QHeaderView::section:hover {
-    background-color: #3E3E42;
+QPushButton:disabled {
+  background: #131820;
+  color: #7a8594;
+  border-color: #202938;
 }
 
-/* 禁用分隔线虚线 */
-QHeaderView {
-    background-color: #2D2D30;
-    border: none;
+/* —— 角色按钮高亮（按对象名定制） —— */
+/* 打开视频：主色 */
+QPushButton#openvideo_1,
+QPushButton#openvideo_2 {
+  background: #4f46e5;
+  border-color: #4f46e5;
+  color: white;
+}
+QPushButton#openvideo_1:hover,
+QPushButton#openvideo_2:hover { background: #5b55ea; }
+QPushButton#openvideo_1:pressed,
+QPushButton#openvideo_2:pressed { background: #4a44d6; }
+
+/* 注册：成功色 */
+QPushButton#pushButton_14 {
+  background: #22c55e;
+  border-color: #22c55e;
+  color: #0b1a10;
+  font-weight: 600;
+}
+QPushButton#pushButton_14:hover { background: #27d167; }
+QPushButton#pushButton_14:pressed { background: #1fb356; }
+
+/* 删除：危险色（对象名 pushButton）*/
+QPushButton#pushButton {
+  background: #ef4444;
+  border-color: #ef4444;
+  color: white;
+}
+QPushButton#pushButton:hover { background: #f25555; }
+QPushButton#pushButton:pressed { background: #dc3b3b; }
+
+/* 清空：中性提升 */
+QPushButton#pushButton_15,
+QPushButton#pushButton_6 {
+  background: #202938;
+  color: #d1d5db;
+}
+QPushButton#pushButton_15:hover,
+QPushButton#pushButton_6:hover { background: #2a3448; }
+
+/* 开启摄像头：次主色（与主色统一） */
+QPushButton#pushButton_5,
+QPushButton#pushButton_8 {
+  background: #3844d6;
+  border-color: #3844d6;
+  color: white;
+}
+QPushButton#pushButton_5:hover,
+QPushButton#pushButton_8:hover { background: #4652dd; }
+QPushButton#pushButton_5:pressed,
+QPushButton#pushButton_8:pressed { background: #323fc5; }
+
+/* 翻页按钮：上一张/下一张 */
+QPushButton#pushButton_16,
+QPushButton#pushButton_17 {
+  background: #1b2230;
+  color: #e5e7eb;
 }
 
-
-
-/* QTreeWidget */
-QTreeWidget {
-    background-color: #1E1E1E;
-    border: 1px solid #3C3C3C;
-    gridline-color: #3C3C3C;
-}
-QTreeWidget::item {
-    height: 28px;
-}
-QTreeWidget::item:selected {
-    background-color: #264F78;
-    color: white;
-}
-
-/* QLabel 显示视频 */
-QLabel#discernlabel, QLabel#label_2 {
-    background-color: black;
-    border: 1px solid #3C3C3C;
-}
-
-/* QLineEdit 输入框 */
+/* -------- 输入框 -------- */
 QLineEdit {
-    background-color: #1E1E1E;
-    border: 1px solid #3C3C3C;
-    border-radius: 4px;
-    padding: 4px;
-    color: #E0E0E0;
-}
-QLineEdit:focus {
-    border: 1px solid #007ACC;
+  background: #0f141c;
+  border: 1px solid #273244;
+  border-radius: 8px;
+  padding: 6px 10px;
+  color: #e5e7eb;
+  selection-background-color: #4f46e5;
+  selection-color: #ffffff;
 }
 
-/* QRadioButton */
+QLineEdit:focus {
+  border: 1px solid #4f46e5;
+  background: #0c1118;
+}
+
+/* ---- QRadioButton（修复文字区域有底色） ---- */
 QRadioButton {
-    spacing: 6px;
+  background: transparent;      /* 关键：让文字区域透明 */
+  color: #d1d5db;
+  spacing: 8px;
+  padding: 2px 0;               /* 扩一点点击热区 */
 }
+
+QRadioButton:hover,
+QRadioButton:checked,
+QRadioButton:pressed {
+  background: transparent;      /* 禁止任何状态给单选本体上色 */
+}
+
 QRadioButton::indicator {
-    width: 14px;
-    height: 14px;
+  width: 16px; height: 16px;
+  margin-right: 6px;
+  border-radius: 9px;
+  border: 2px solid #3a465a;
+  background: none;             /* 指示器不填底色，跟随父背景 */
 }
-QRadioButton::indicator:unchecked {
-    border: 1px solid #A0A0A0;
-    border-radius: 7px;
-    background: none;
+
+QRadioButton::indicator:hover {
+  border-color: #4b5a74;
 }
+
 QRadioButton::indicator:checked {
-    border: 1px solid #007ACC;
-    border-radius: 7px;
-    background: #007ACC;
+  background: none;             /* 用粗边模拟中心点 */
+  border: 5px solid #4f46e5;
 }
+
+
+/* -------- 树表（结算区域 QTreeWidget） -------- */
+QTreeWidget {
+  background: #10151d;
+  border: 1px solid #273244;
+  border-radius: 10px;
+  show-decoration-selected: 1;
+  alternate-background-color: #0d1117;
+}
+
+QTreeView::item {
+  height: 30px;
+}
+
+QTreeView::item:selected {
+  background: #263244;
+  color: #ffffff;
+}
+
+QTreeView::item:hover {
+  background: #1b2533;
+}
+
+QHeaderView::section {
+  background: #1b2230;
+  color: #cbd5e1;
+  padding: 6px 10px;
+  border: none;
+  border-right: 1px solid #273244;
+}
+QHeaderView::section:first {
+  border-top-left-radius: 10px;
+}
+QHeaderView::section:last {
+  border-top-right-radius: 10px;
+  border-right: none;
+}
+
+/* -------- 占位画布标签（视频/特征图预览） -------- */
+/* 这些都是 QLabel：#discernlabel / #register_2 / #feature */
+QLabel#discernlabel,
+QLabel#register_2,
+QLabel#feature {
+  background: qlineargradient(x1:0,y1:0,x2:0,y2:1,
+              stop:0 #0e131a, stop:1 #0b0f15);
+  border: 1px dashed #334155;
+  border-radius: 12px;
+  color: #94a3b8;
+  /* 让“无图像”文字居中显示 */
+  qproperty-alignment: 'AlignCenter';
+  /* 防止内容紧贴边缘 */
+  padding: 6px;
+}
+
+/* 如果你会在无图状态下 setText("无图像")，可以再加淡化处理 */
+QLabel#feature[empty="true"],
+QLabel#discernlabel[empty="true"],
+QLabel#register_2[empty="true"] {
+  color: #708299;
+}
+
+/* -------- 滚动条（垂直/水平） -------- */
+QScrollBar:vertical {
+  background: transparent;
+  width: 12px;
+  margin: 6px 2px 6px 2px;
+}
+
+QScrollBar::handle:vertical {
+  background: #2a3448;
+  min-height: 30px;
+  border-radius: 6px;
+}
+
+QScrollBar::handle:vertical:hover { background: #334155; }
+QScrollBar::handle:vertical:pressed { background: #3b4a63; }
+
+QScrollBar::add-line:vertical,
+QScrollBar::sub-line:vertical {
+  height: 0px;
+}
+
+QScrollBar:horizontal {
+  background: transparent;
+  height: 12px;
+  margin: 2px 6px 2px 6px;
+}
+
+QScrollBar::handle:horizontal {
+  background: #2a3448;
+  min-width: 30px;
+  border-radius: 6px;
+}
+
+QScrollBar::handle:horizontal:hover { background: #334155; }
+QScrollBar::handle:horizontal:pressed { background: #3b4a63; }
+
+QScrollBar::add-line:horizontal,
+QScrollBar::sub-line:horizontal {
+  width: 0px;
+}
+
+/* -------- Tooltip -------- */
+QToolTip {
+  background: #1b2230;
+  color: #e5e7eb;
+  border: 1px solid #273244;
+  padding: 6px 8px;
+  border-radius: 8px;
+}
+
+/* -------- 标签文本与日期右上角 -------- */
+QLabel {
+  color: #cfd6df;
+}
+QLabel#label_3 {        /* 右上角日期 */
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+/* -------- 价格大号显示 -------- */
+QLabel#price {
+  color: #22c55e;
+  font-weight: 700;
+  font-size: 20px;
+}
+
+/* -------- 小细节优化 -------- */
+QAbstractItemView {
+  outline: 0;
+  selection-background-color: #263244;
+  selection-color: #ffffff;
+}
+
+/* 仅作用于 widget_7 内部的 QLabel —— 设为透明并去掉边框 */
+QWidget#widget_7 QLabel {
+  background: transparent;
+  border: none;
+}
+
+/* 若之前对这几个占位做了渐变+虚线边框，下面用更高优先级覆盖 */
+QWidget#widget_7 QLabel#feature,
+QWidget#widget_7 QLabel#discernlabel,
+QWidget#widget_7 QLabel#register_2 {
+  background: transparent;
+  border: none;
+}
+

@@ -6,14 +6,14 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1442</width>
-    <height>845</height>
+    <width>1674</width>
+    <height>823</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <layout class="QGridLayout" name="gridLayout_8">
+  <layout class="QGridLayout" name="gridLayout_9">
    <item row="0" column="0">
     <widget class="QWidget" name="widget_3" native="true">
      <layout class="QHBoxLayout" name="horizontalLayout_3">
@@ -85,7 +85,7 @@
       <number>1</number>
      </property>
      <widget class="QWidget" name="page">
-      <layout class="QGridLayout" name="gridLayout_6">
+      <layout class="QGridLayout" name="gridLayout_8">
        <item row="0" column="0" rowspan="2">
         <widget class="QGroupBox" name="groupBox">
          <property name="title">
@@ -93,22 +93,16 @@
          </property>
          <layout class="QGridLayout" name="gridLayout_3">
           <item row="0" column="0">
-           <widget class="QVideoWidget" name="widget" native="true">
-            <layout class="QGridLayout" name="gridLayout_9">
-             <item row="0" column="0">
-              <widget class="QLabel" name="discernlabel">
-               <property name="minimumSize">
-                <size>
-                 <width>1024</width>
-                 <height>576</height>
-                </size>
-               </property>
-               <property name="text">
-                <string/>
-               </property>
-              </widget>
-             </item>
-            </layout>
+           <widget class="QLabel" name="discernlabel">
+            <property name="minimumSize">
+             <size>
+              <width>1280</width>
+              <height>720</height>
+             </size>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
            </widget>
           </item>
          </layout>
@@ -118,7 +112,7 @@
         <widget class="QGroupBox" name="groupBox_2">
          <property name="maximumSize">
           <size>
-           <width>338</width>
+           <width>16777215</width>
            <height>16777215</height>
           </size>
          </property>
@@ -156,13 +150,13 @@
            <widget class="QTreeWidget" name="treeWidget">
             <property name="minimumSize">
              <size>
-              <width>320</width>
+              <width>0</width>
               <height>0</height>
              </size>
             </property>
             <property name="maximumSize">
              <size>
-              <width>320</width>
+              <width>16777215</width>
               <height>16777215</height>
              </size>
             </property>
@@ -224,7 +218,7 @@
       </layout>
      </widget>
      <widget class="QWidget" name="page_2">
-      <layout class="QGridLayout" name="gridLayout_11">
+      <layout class="QGridLayout" name="gridLayout_6">
        <item row="0" column="0" rowspan="4">
         <widget class="QGroupBox" name="groupBox_5">
          <property name="title">
@@ -232,22 +226,16 @@
          </property>
          <layout class="QGridLayout" name="gridLayout_4">
           <item row="0" column="0">
-           <widget class="QVideoWidget" name="widget_4" native="true">
-            <layout class="QGridLayout" name="gridLayout_10">
-             <item row="0" column="0">
-              <widget class="QLabel" name="register_2">
-               <property name="minimumSize">
-                <size>
-                 <width>1024</width>
-                 <height>576</height>
-                </size>
-               </property>
-               <property name="text">
-                <string/>
-               </property>
-              </widget>
-             </item>
-            </layout>
+           <widget class="QLabel" name="register_2">
+            <property name="minimumSize">
+             <size>
+              <width>1280</width>
+              <height>720</height>
+             </size>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
            </widget>
           </item>
          </layout>
@@ -257,13 +245,13 @@
         <widget class="QGroupBox" name="groupBox_4">
          <property name="minimumSize">
           <size>
-           <width>338</width>
+           <width>0</width>
            <height>0</height>
           </size>
          </property>
          <property name="maximumSize">
           <size>
-           <width>338</width>
+           <width>16777215</width>
            <height>16777215</height>
           </size>
          </property>
@@ -275,8 +263,14 @@
            <widget class="QLabel" name="feature">
             <property name="minimumSize">
              <size>
-              <width>320</width>
-              <height>500</height>
+              <width>0</width>
+              <height>400</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>400</height>
              </size>
             </property>
             <property name="text">
@@ -465,14 +459,6 @@
    </item>
   </layout>
  </widget>
- <customwidgets>
-  <customwidget>
-   <class>QVideoWidget</class>
-   <extends>QWidget</extends>
-   <header>qvideowidget.h</header>
-   <container>1</container>
-  </customwidget>
- </customwidgets>
  <resources/>
  <connections/>
 </ui>

@@ -59,8 +59,8 @@ class ProductService:
                     "INSERT INTO feature_mappings (product_id) VALUES (%s)",
                     (product_id,)
                 )
-                points.append({"id": feature_id, "vector": vec.tolist()})
-
+                # points.append({"id": feature_id, "vector": vec.tolist()})
+                points.append({"id": feature_id, "vector": vec})
             # 4️⃣ 写入向量数据库
             self.qdrant.upsert_vectors(points)
 

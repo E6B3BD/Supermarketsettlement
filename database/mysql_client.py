@@ -27,6 +27,10 @@ class MySQLClient:
         self.log = DailyLogger("MySQL")  # 初始化日志记录器，标签为 "MySQL"
         self.config = None              # 存储从配置文件读取的数据库连接参数
         self._load_config()             # 加载数据库配置
+        try:
+            self._reconnect()  # 主动建立连接和游标
+        except Exception as e:
+            self.log.error(f"初始化数据库连接失败: {e}")
         self._initialized = True        # 标记为已初始化
 
     # 加载数据库配置文件

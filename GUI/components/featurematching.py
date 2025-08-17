@@ -58,10 +58,12 @@ class FeatureMatching:
 
     # 自动
     def aftercuremask(self,MaskList):
+        # print(f"🔍 MaskList 内容: {MaskList}")  # 👈 加这行
         output=[]
-        for feature in MaskList:
-            feat,modelname=feature
+        for item in MaskList:
+            feat,modelname=item
             input_tensor=self.preprocess_for_model(feat)
+            modelname = modelname.strip().strip('_').lower()
             if modelname=="bag":
                 with torch.no_grad():
                     output.append(self.bag(input_tensor)[0].tolist())
@@ -74,27 +76,28 @@ class FeatureMatching:
             if modelname == "can":
                 with torch.no_grad():
                     output.append(self.can(input_tensor)[0].tolist())
-
         self.MatchingDatabase(output)
 
+    def MatchingDatabase(self, output):
+        if not output:
+            print("⚠️ output 为空，跳过数据库匹配")
+            self.UpdateUl(None)
+            return
+        else:
+            CommodityData=self.dataset.search_similar_products(output[0])
+            # print(data)
+            self.UpdateUl(CommodityData)
 
-    def MatchingDatabase(self,output:list):
-        # 使用name在向量中过滤？假设分割错误？30帧为一次的的比对
-        FeatureID=[]
-        for out in output:
-            results=self.dataset.vector.MatchingFeature(out)
-            for hit in results:
-                FeatureID.append(int(hit.id))
-        unique_list = list(dict.fromkeys(FeatureID))
-        CommodityData=self.dataset.InquireData(unique_list)
-        self.UpdateUl(CommodityData)
 
 
 
 
     def UpdateUl(self,CommodityData):
-        pass
-        # Tablewiget add_item
+        for data in CommodityData:
+            self.Tab.add_item(data["name"],data["price"],data["id"])
+
+
+
 
 
 

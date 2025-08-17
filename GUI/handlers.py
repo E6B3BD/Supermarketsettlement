@@ -63,15 +63,10 @@ class AppHandlers(QObject):
         # === 特征匹配模块（仅用户通道）===
         self.FeatureMatching = FeatureMatching(self.ui, status=status.USER)
         # 特征匹配
-        # self.user_channel.postprocessed.connect(self.register.aftercuremask)
-
-
-
-
-
-
+        self.user_channel.postprocessed.connect(self.FeatureMatching.aftercuremask)
         # 测试按钮
-        Userbinding(self.user_channel, self.ui)
+        Userbinding(self.FeatureMatching, self.ui)
+
         #  打开视频按钮
         self.ui.openvideo_1.clicked.connect(self.user_channel.Loadvideo)
         self.ui.openvideo_2.clicked.connect(self.admin_channel.Loadvideo)

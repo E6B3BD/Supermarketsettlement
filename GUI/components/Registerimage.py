@@ -218,7 +218,13 @@ class Register:
         output=self.models.aftercuremask(input)
         name=self.ui.commodityname.text()
         price=float(self.ui.unitprice.text())
-        self.dataset.WriteCommodityData(name,price,commodity,output)
+        self.dataset.write_commodity(name,price,commodity,output)
+
+    # 清空按钮
+    def empty(self):
+        self.feature.clear()
+        self.has_displayed_initial=False
+        self._show_placeholder()
 
 
 

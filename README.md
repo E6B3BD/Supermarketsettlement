@@ -1,10 +1,8 @@
 ##### 智能商品结算系统
 
-需求是高精度，动态类别，实现结算商品系统，
+![](./GUI/Resources/Icons/home.png)
 
-我目前是的思路是将商品分为一个大类，如果瓶装，盒装，袋装，罐装，这种大类，每个大类有不同的小类，如训练时瓶装用农夫山泉，怡宝，测试时候就是哇哈哈，整个项目首先是用`yolov8`分割模型并提取到该类别，然后通过特征提取模型的输出与特征注册库进行匹配，使用余弦距离进行计算，需要解决的是类别不固定问题，比如后期进货新品难道还要训练模型嘛？所以需要解决模型频繁更新问题，特征提取模型要能够识别出同一类别下不同对象的差异性，比如人脸，中国人，日本人，美国人，在这个项目中，应该具有识别同一类水，不同的对象，可口可乐，百事可乐，对模型的特征提取能力要求较高，我认为可以是采用`ArcLoss`，当进货的商品是新对象，那么可以通过注册到特征库中，通过不同的角度进行注册就可就行，这样大大的减少了模型频繁更新的问题，类别的固定我认为是输出层导致的，与主干网络无关，主干网络只是特征的提取，把主干和输出分开做，限制类别固定的是`one-hot`直接使用`label`就行，还有就是如何设计一个好的图像特征提取模型？足够深得网络和`ArcLoss`，以及大量得数据集，特征注册部分，可以采用数据库，或者txt？这个地方也需要好好考虑设计，因为这里和金钱挂钩，还有就是特征向量和注册库得特征向量得匹配置信度，需要达到0.9及以上，同时需要多帧连续检测，统计频率最高得，送入特征提取模型得数据集也是非常重要得，只有分割才能去噪到最好，需要抠图，同时需要将抠图得商品进行摆正，通过计算`opencv`最小外接矩形，并知道得角度，通过角度实现统一，还有就是统一缩放为正方形，可以考虑采用`yolo`官方的算子借鉴实现，卷积对中心橡素的特征提取能力强，对边缘特征提取能力弱，需要想办法解决这个问题，让去缩放在中心位置，或则可以考虑先摆正后再通过最大的外接矩形剪切到一个黑色蒙版上贴图上去？
-
-一个好的特征提取网络，需要足够深，如resnet50以上，特征向量维度不能低于512，甚至更高，训练特征提取模型可以使用`NLLLoss+ArcLoss`，前端交互界面使用`python Qt`
+基础架构
 
 ```python
 [摄像头输入]
@@ -32,12 +30,12 @@
 
 #### 策略：
 
-- 连续采集 3~5 帧
+- 连续采集 30~50 帧
 - 每帧输出一个预测结果（含置信度）
 - 统计最高频次且平均置信度 > 0.9 的结果
 - 若不一致 → 提示“请重新放置商品”
 
-### 前端交互设计（PyQt5/6）
+### 前端交互设计
 
 #### 主要功能：
 
@@ -49,37 +47,7 @@
 
 #### 数据库
 
-**SQLite + FAISS（独立索引）**
-
-##### 商品主表
-
-```sql
-CREATE TABLE products (
-    id TEXT PRIMARY KEY,           -- 商品唯一ID，如 B001, C002
-    name TEXT NOT NULL,            -- 名称：农夫山泉 550ml
-    price REAL NOT NULL,           -- 价格（单位：元）
-    category TEXT NOT NULL,        -- 大类：bottle, box, bag, can
-    image_count INTEGER DEFAULT 1, -- 注册时使用的图像数量
-    created_time DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_time DATETIME DEFAULT CURRENT_TIMESTAMP
-);
-```
-
-##### 特征模板表
-
-```sql
-CREATE TABLE feature_templates (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    product_id TEXT NOT NULL,
-    angle INTEGER DEFAULT 0,       -- 拍摄角度（可选）
-    feature_data BLOB NOT NULL,    -- 存储 numpy array (pickle.dumps)
-    FOREIGN KEY (product_id) REFERENCES products(id)
-);
-```
-
-可以为每个商品注册多个角度的特征，识别时取平均或最大相似度。
-
-建表命令
+`MySQL`
 
 ```sql
 -- 设置客户端字符集
@@ -142,8 +110,6 @@ DELETE FROM feature_templates;
 ALTER TABLE feature_templates AUTO_INCREMENT = 1;
 ```
 
-
-
 主表ID通过设计自增表实现
 
 | 中文 | 英文类别 | 建议 ID 前缀 |
@@ -184,7 +150,7 @@ INSERT INTO id_counter (category_prefix, category_name, next_id) VALUES
 
 设计向量自增表
 
-```python
+```mysql
 CREATE TABLE feature_mappings (
     feature_id INT AUTO_INCREMENT PRIMARY KEY,
     product_id VARCHAR(50) NOT NULL,

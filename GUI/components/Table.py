@@ -6,7 +6,7 @@ class Tablewiget():
     def __init__(self,ui):
         self.ui = ui
 
-    def add_item(self, product_id, name, price, quantity=1):
+    def add_item(self,name, price, product_id,quantity=1,):
         """
         添加商品：如果商品 ID 已存在，则数量累加；否则新增一行
         :param product_id: 商品 ID

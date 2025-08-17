@@ -206,7 +206,7 @@ def Alignat(output):
                 cv2.imwrite(os.path.join(SAVE_DIR, f"{prefix}{uuid.uuid4()}.png"), canvas)
             except Exception:
                 pass
-            MaskList.append(canvas)
+            MaskList.append((canvas, prefix))
     # 5) 回退到 bbox：当前帧没有成功用 mask 裁到任何目标时
     if (not MaskList) and FALLBACK_TO_BBOX and hasattr(output, "boxes") and getattr(output.boxes, "xyxy", None) is not None:
         try:

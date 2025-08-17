@@ -44,22 +44,26 @@ QStackedWidget {
   border-radius: 10px;
 }
 
-/* -------- GroupBox（分组框） -------- */
+
+
 QGroupBox {
   background: #151a21;
   border: 1px solid #273244;
   border-radius: 12px;
-  margin-top: 18px; /* 给标题留位置 */
+  margin-top: 0;          /* 撤销悬浮 */
+  padding-top: 16px;      /* 留出标题高度 */
 }
 
 QGroupBox::title {
-  subcontrol-origin: margin;
-  left: 14px;
-  padding: 0 8px;
+  subcontrol-origin: padding;
+  subcontrol-position: top left; /* 交给 Qt 默认布局 */
+  padding: 0 6px;
   color: #cbd5e1;
-  background: #151a21;
-  font-weight: 600;
+  background: transparent;       /* 透明即可 */
+  /* 不再使用 top/left 精调 */
 }
+
+
 
 /* -------- 顶部导航按钮（用户/管理/数据库） -------- */
 QPushButton#user,
@@ -365,4 +369,14 @@ QWidget#widget_7 QLabel#register_2 {
   background: transparent;
   border: none;
 }
+
+QLabel#label_5  {
+  background: transparent;
+  border: none;
+}
+QLabel#label_4  {
+  background: transparent;
+  border: none;
+}
+
 

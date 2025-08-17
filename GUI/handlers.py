@@ -63,7 +63,7 @@ class AppHandlers(QObject):
         # === 特征匹配模块（仅用户通道）===
         self.FeatureMatching = FeatureMatching(self.ui, status=status.USER)
         # 特征匹配
-        # self.user_channel.postprocessed.connect(self.FeatureMatching.aftercuremask)
+        self.user_channel.postprocessed.connect(self.FeatureMatching.aftercuremask)
         # 表格按钮绑定
         Userbinding(self.FeatureMatching, self.ui)
 

@@ -9,8 +9,10 @@ from utils.cfg import MODEL_PATH
 
 from .Table import Tablewiget
 
-# from database.db_manager import DataBASE
+
 from database.product_service import ProductService
+
+
 
 
 
@@ -21,11 +23,13 @@ class FeatureMatching:
     def __init__(self,ui,status):
         self.ui=ui
         self.status=status
-        self.bag=FeatureNet()
-        self.bottle=FeatureNet()
-        self.box=FeatureNet()
-        self.can=FeatureNet()
-        # 加载模型
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        # 模型
+        self.bag = FeatureNet().to(self.device).eval()
+        self.bottle = FeatureNet().to(self.device).eval()
+        self.box = FeatureNet().to(self.device).eval()
+        self.can = FeatureNet().to(self.device).eval()
+        # 加载模型权重
         self.Loadmodel()
         # 数据库
         self.dataset=ProductService()
@@ -33,27 +37,17 @@ class FeatureMatching:
 
 
     def Loadmodel(self):
-        models=[
-            (self.bag,"bag"),
-            (self.bottle, "bottle"),
-            (self.box, "box"),
-            (self.can, "can")
-        ]
-        device = "cuda" if torch.cuda.is_available() else "cpu"
-        for model in models:
-            model_path = MODEL_PATH.format(model[1])
-            model[0].load_state_dict(torch.load(model_path,
-                                map_location=torch.device(device),
-                                                weights_only=True))
+        models=[(self.bag,"bag"),(self.bottle, "bottle"),(self.box, "box"),(self.can, "can")]
+        for model,name  in models:
+            weight = torch.load(MODEL_PATH.format(name), map_location=self.device, weights_only=True)
+            model.load_state_dict(weight)
 
-    def preprocess_for_model(self, img):
-        """将原始图像预处理为模型输入张量"""
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        img = cv2.resize(img, (224, 224))
-        img = img.astype(np.float32) / 255.0
-        img = np.transpose(img, (2, 0, 1))
-        input_tensor = torch.from_numpy(img).unsqueeze(0)
-        return input_tensor
+    # 前处理
+    def preprocess_for_model(self, img_bgr):
+        x = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
+        x = cv2.resize(x, (224, 224)).astype(np.float32) / 255.0
+        x = np.transpose(x, (2, 0, 1))            # CHW
+        return torch.from_numpy(x).unsqueeze(0).to(self.device)  # NCHW
 
 
     # 自动

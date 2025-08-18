@@ -42,9 +42,12 @@ class Register:
         self.current_feature_index = -1
         self.updatepage()
 
+
+    #  results.append((canvas, name, tid))
     def MASKkIMG(self, MaskList):
         """接收 [img] 或 [(img,name)]；仅保留 img 并按限速/容量加入。"""
-        MaskList = [m[0] if isinstance(m, (tuple, list)) else m for m in (MaskList or [])]
+        MaskList = [t[0] for t in (MaskList or [])]
+
         if not MaskList:
             self.log.debug("未检测到任何分割特征")
             return

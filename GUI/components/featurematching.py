@@ -9,10 +9,8 @@ from utils.cfg import MODEL_PATH
 
 from .Table import Tablewiget
 
-
+# from database.db_manager import DataBASE
 from database.product_service import ProductService
-
-
 
 
 
@@ -55,19 +53,19 @@ class FeatureMatching:
         # print(f"🔍 MaskList 内容: {MaskList}")  # 👈 加这行
         output=[]
         for item in MaskList:
-            feat,modelname=item
+            feat,name,tid=item
             input_tensor=self.preprocess_for_model(feat)
-            modelname = modelname.strip().strip('_').lower()
-            if modelname=="bag":
+            # modelname = modelname.strip().strip('_').lower()
+            if name=="bag":
                 with torch.no_grad():
                     output.append(self.bag(input_tensor)[0].tolist())
-            if modelname == "bottle":
+            if name == "bottle":
                 with torch.no_grad():
                     output.append(self.bottle(input_tensor)[0].tolist())
-            if modelname == "box":
+            if name == "box":
                 with torch.no_grad():
                     output.append(self.box(input_tensor)[0].tolist())
-            if modelname == "can":
+            if name == "can":
                 with torch.no_grad():
                     output.append(self.can(input_tensor)[0].tolist())
         self.MatchingDatabase(output)
@@ -79,7 +77,8 @@ class FeatureMatching:
             return
         else:
             CommodityData=self.dataset.search_similar_products(output[0])
-            # print(data)
+            if not CommodityData:
+                return
             self.UpdateUl(CommodityData)
 
 
@@ -89,7 +88,7 @@ class FeatureMatching:
     def UpdateUl(self,CommodityData):
         for data in CommodityData:
             self.Tab.add_item(data["name"],data["price"],data["id"])
-
+            # print(data["name"],data["price"],data["id"])
 
 
 

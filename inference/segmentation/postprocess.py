@@ -203,7 +203,7 @@ def Alignat(output):
             # 保存
             try:
                 os.makedirs(SAVE_DIR, exist_ok=True)
-                cv2.imwrite(os.path.join(SAVE_DIR, f"{prefix}{uuid.uuid4()}.png"), canvas)
+                # cv2.imwrite(os.path.join(SAVE_DIR, f"{prefix}{uuid.uuid4()}.png"), canvas)
             except Exception:
                 pass
             MaskList.append((canvas, prefix))
@@ -243,7 +243,7 @@ def Alignat(output):
                         except: prefix = f"{cls_i}_"
                 try:
                     os.makedirs(SAVE_DIR, exist_ok=True)
-                    cv2.imwrite(os.path.join(SAVE_DIR, f"{prefix}{uuid.uuid4()}.png"), canvas)
+                   # cv2.imwrite(os.path.join(SAVE_DIR, f"{prefix}{uuid.uuid4()}.png"), canvas)
                 except Exception:
                     pass
                 MaskList.append((canvas,prefix))
@@ -369,6 +369,189 @@ def extractiondata(output):
         path = os.path.join(PATH, name)
         cv2.imwrite(f"{path}/{uuid.uuid4()}.png", canvas)
         return []
+
+
+
+
+
+
+
+
+
+
+
+
+# =========================================================
+# 小工具（模块级；可复用，可单测）
+# =========================================================
+def tensor_to_np(x):
+    """torch.Tensor -> np.ndarray，兼容 detach/cpu；若已是 np 则原样返回。"""
+    try:
+        # 绝大多数学术/部署环境都走这里
+        return x.detach().cpu().numpy()
+    except Exception:
+        # 有的结果对象可能是已经在 cpu 上的 Tensor
+        try:
+            return x.cpu().numpy()
+        except Exception:
+            return x  # 已经是 numpy 的情况
+
+
+def resolve_class_name(names, idx: int) -> str:
+    """
+    从 output.names 解析类别名；兼容 dict / list / tuple。
+    - names: 可能是 dict({idx: name}) 或 list/tuple
+    - idx:   类别下标(int)
+    """
+    i = int(idx)
+    if isinstance(names, dict):
+        return names.get(i, str(i))
+    if isinstance(names, (list, tuple)):
+        return names[i] if 0 <= i < len(names) else str(i)
+    return str(i)
+
+
+def to_square_canvas(img_bgr, final_size=384):
+    """
+    把任意 BGR 小图等比缩放后，居中贴到 final_size x final_size 的方形画布。
+    - img_bgr: np.ndarray(H, W, 3)
+    - 返回: np.ndarray(final_size, final_size, 3) 或 None（无效输入）
+    """
+    if img_bgr is None or img_bgr.size == 0:
+        return None
+    h, w = img_bgr.shape[:2]
+    if h == 0 or w == 0:
+        return None
+    r = min(final_size / w, final_size / h)
+    nw, nh = max(1, int(w * r)), max(1, int(h * r))
+    resized = cv2.resize(img_bgr, (nw, nh), interpolation=cv2.INTER_AREA)
+    canvas = np.zeros((final_size, final_size, 3), dtype=np.uint8)
+    sx, sy = (final_size - nw) // 2, (final_size - nh) // 2
+    canvas[sy:sy + nh, sx:sx + nw] = resized
+    return canvas
+
+
+def save_debug(canvas, name: str, tid, save_dir: str):
+    """
+    仅用于可视化调试：把 canvas 按命名规则保存到磁盘。
+    命名规则：
+      有ID  -> "{name}{id}=+={uuid}.png"
+      无ID  -> "{name}_=+={uuid}.png"
+    - 若 save_dir 为 None/空字符串，则直接返回不保存。
+    """
+    if not save_dir:
+        return
+    try:
+        os.makedirs(save_dir, exist_ok=True)
+        prefix = f"{name}{int(tid)}" if tid is not None else f"{name}_"
+        cv2.imwrite(os.path.join(save_dir, f"{prefix}=+={uuid.uuid4()}.png"), canvas)
+    except Exception:
+        # 调试保存失败不影响主流程
+        pass
+
+
+# =========================================================
+# 主函数（尽量扁平、少嵌套；仅调用上面的工具）
+# =========================================================
+def AlignatBeta(output):
+    # ===== 参数（你可按需改）=====
+    SAVE_DIR          = r"I:\python-Code\Supermarketsettlement\DATA\F"  # 仅调试可视化
+    SAVE_DEBUG        = False   # 调试模块
+    FINAL_SIZE        = 384    # 图像大小
+    MIN_AREA          = 80    # 过滤过小噪点
+    KSIZE             = 3     # 形态学内核
+    DILATE_ITR        = 1     # 轻微膨胀
+    FALLBACK_TO_BBOX  = True # 无 mask 时回退到 bbox
+    # ===== 取原图 =====
+    frame = getattr(output, "orig_img", None)
+    if frame is None or not hasattr(frame, "shape"):
+        return []
+    H, W = frame.shape[:2]
+    # ===== 解析 boxes / masks / names =====
+    names = getattr(output, "names", None)
+    classes = track_ids = boxes_xyxy = masks_data = None
+    if hasattr(output, "boxes"):
+        if getattr(output.boxes, "cls", None) is not None:
+            classes = tensor_to_np(output.boxes.cls).astype(np.int64)
+        if getattr(output.boxes, "id", None) is not None:
+            track_ids = tensor_to_np(output.boxes.id).astype(np.int64)
+        if getattr(output.boxes, "xyxy", None) is not None:
+            boxes_xyxy = tensor_to_np(output.boxes.xyxy).astype(np.int32)
+    if hasattr(output, "masks") and output.masks is not None and hasattr(output.masks, "data"):
+        masks_data = tensor_to_np(output.masks.data)  # [N, H, W]
+    results = []  # [(canvas, name, tid)]
+    # ===== 优先走 mask 路径 =====
+    if masks_data is not None and len(masks_data) > 0:
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (KSIZE, KSIZE))
+        for i, m in enumerate(masks_data):
+            # 1) 形态学清理
+            m = (m > 0.5).astype(np.uint8) * 255
+            m = cv2.morphologyEx(m, cv2.MORPH_CLOSE, kernel)
+            m = cv2.morphologyEx(m, cv2.MORPH_OPEN,  kernel)
+            if DILATE_ITR > 0:
+                m = cv2.dilate(m, kernel, iterations=DILATE_ITR)
+            # 2) 最大连通域，过滤小目标
+            cnts, _ = cv2.findContours(m, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            if not cnts:
+                continue
+            cnt = max(cnts, key=cv2.contourArea)
+            if cv2.contourArea(cnt) < MIN_AREA:
+                continue
+            # 3) 利用最小外接矩形矫正角度（统一“横放”）
+            (cx, cy), (rw, rh), ang = cv2.minAreaRect(cnt)
+            if rw < rh:
+                ang += 90.0
+            M = cv2.getRotationMatrix2D((cx, cy), ang, 1.0)
+            rot_img  = cv2.warpAffine(frame, M, (W, H), flags=cv2.INTER_LINEAR,  borderValue=0)
+            rot_mask = cv2.warpAffine(m,     M, (W, H), flags=cv2.INTER_NEAREST, borderValue=0)
+            # 4) 在旋正后的二值图上取最大连通域，得到 bbox 并裁剪原图
+            cnts2, _ = cv2.findContours(rot_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            if not cnts2:
+                continue
+            x, y, w, h = cv2.boundingRect(max(cnts2, key=cv2.contourArea))
+            if w <= 0 or h <= 0:
+                continue
+            x1, y1 = max(0, x), max(0, y)
+            x2, y2 = min(W, x + w), min(H, y + h)
+            crop = rot_img[y1:y2, x1:x2]
+            if crop.size == 0:
+                continue
+            # 5) 使用掩膜提取前景，再贴到 384x384 画布
+            fg = cv2.bitwise_and(crop, crop, mask=rot_mask[y1:y2, x1:x2])
+            canvas = to_square_canvas(fg, FINAL_SIZE)
+            if canvas is None:
+                continue
+            # 6) 类名与 track id（注意索引容错）
+            name = resolve_class_name(names, classes[i]) if (classes is not None and i < len(classes)) else "unknown"
+            tid  = int(track_ids[i]) if (track_ids is not None and i < len(track_ids)) else None
+
+            # 7) 可选调试保存 + 收集结果
+            if SAVE_DEBUG:
+                save_debug(canvas, name, tid, SAVE_DIR)
+
+            results.append((canvas, name, tid))
+    # ===== 无 mask -> 回退到 bbox（逻辑保持一致）=====
+    if (not results) and FALLBACK_TO_BBOX and boxes_xyxy is not None and len(boxes_xyxy) > 0:
+        for i, (x1, y1, x2, y2) in enumerate(boxes_xyxy):
+            x1, y1 = max(0, int(x1)), max(0, int(y1))
+            x2, y2 = min(W, int(x2)), min(H, int(y2))
+            if x2 <= x1 or y2 <= y1:
+                continue
+            crop = frame[y1:y2, x1:x2]
+            if crop.size == 0:
+                continue
+            canvas = to_square_canvas(crop, FINAL_SIZE)
+            if canvas is None:
+                continue
+            name = resolve_class_name(names, classes[i]) if (classes is not None and i < len(classes)) else "unknown"
+            tid  = int(track_ids[i]) if (track_ids is not None and i < len(track_ids)) else None
+            if SAVE_DEBUG:
+                save_debug(canvas, name, tid, SAVE_DIR)
+            results.append((canvas, name, tid))
+    return results
+
+
+
 
 
 

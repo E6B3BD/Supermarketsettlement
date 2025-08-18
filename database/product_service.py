@@ -110,7 +110,7 @@ class ProductService:
             self.log.error(f"查询商品失败: {e}")
             return None
 
-    def search_similar_products(self, query_vector, top_k=5):
+    def search_similar_products(self, query_vector, top_k=3,MIN_SCORE=0.8):
         """
         通过向量搜索相似商品
         :param query_vector: 查询向量 (np.array)
@@ -118,8 +118,10 @@ class ProductService:
         :return: 商品信息列表
         """
         try:
-            feature_ids = self.qdrant.search_vectors(query_vector, limit=top_k)
-            return self.query_by_feature_ids(feature_ids)
+            feature_ids = self.qdrant.search_vectors(query_vector, limit=top_k,MIN_SCORE=MIN_SCORE)
+            # print("向量特征库ID", feature_ids)
+            # return self.query_by_feature_ids(feature_ids)
+            return [] if not feature_ids else self.query_by_feature_ids(feature_ids)
         except Exception as e:
             self.log.error(f"相似搜索失败: {e}")
             return None

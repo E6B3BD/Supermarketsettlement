@@ -54,10 +54,16 @@ class QdrantClient:
         self.client.upsert(collection_name=self.collection_name, points=points)
 
     # 特征匹配
-    def search_vectors(self, query_vector, limit=5):
+    def search_vectors(self, query_vector, limit=3,MIN_SCORE=0.9):
         result = self.client.query_points(
             collection_name=self.collection_name,
             query=query_vector,
-            limit=limit
+            limit=limit,
+            # 过滤值
+            # score_threshold = MIN_SCORE ,
+            # with_payload=False,  # 不要业务字段
+            # with_vectors=False,  # 不要向量本体
         ).points
-        return [hit.id for hit in result]  # 返回特征 ID 列表
+        for hit in result:
+            print(f"ID: {hit.id}, 相似度得分: {hit.score:.4f}")
+        return [hit.id for hit in (result or [])]  # 返回特征 ID 列表

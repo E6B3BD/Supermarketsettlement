@@ -1,6 +1,6 @@
 from PySide2.QtCore import QRunnable, QObject, Signal
 import numpy as np
-from inference.segmentation.postprocess import Alignat,extractiondata
+from inference.segmentation.postprocess import Alignat,extractiondata,AlignatBeta
 import uuid
 import cv2
 
@@ -24,7 +24,7 @@ class OutputProcessorTask(QRunnable):
             # MaskList=Alignat(frame,self.output)
             # 提取分类数据
             # cv2.imwrite(f"I:\python-Code\Supermarketsettlement\DATA\A\{uuid.uuid4()}.png", self.frame)
-            MaskList = Alignat(self.output)
+            MaskList = AlignatBeta(self.output)
 
             # MaskList = extractiondata(self.output)
 

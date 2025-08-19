@@ -24,15 +24,9 @@ class Tablewiget():
                 old_quantity = int(item.text(2))
                 new_quantity = old_quantity + int(quantity)
                 item.setText(2, str(new_quantity))
-
-                # 可选：价格变动提醒（如果新价格不同，一般不会）
-                # if float(item.text(1)) != float(price):
-                #     item.setText(1, f"{float(price):.2f}")  # 更新价格（谨慎使用）
-
                 # 更新后自动刷新总价
                 self.get_total_price()
                 return  # 直接返回，不再新增
-
         # ❌ 没找到：新增一行
         item = QTreeWidgetItem()
         item.setText(0, str(name))

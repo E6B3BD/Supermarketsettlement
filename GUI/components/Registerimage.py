@@ -218,7 +218,7 @@ class Register:
             commodity = "can"
             for mask in self.feature:
                 input.append((mask, "can"))
-        output=self.models.aftercuremask(input)
+        output=self.models.Featureregistration(input)
         name=self.ui.commodityname.text()
         price=float(self.ui.unitprice.text())
         self.dataset.write_commodity(name,price,commodity,output)

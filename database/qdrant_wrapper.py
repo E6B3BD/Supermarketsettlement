@@ -76,13 +76,7 @@ class QdrantClient:
             # with_payload=False,  # 不要业务字段
             # with_vectors=False,  # 不要向量本体
         ).points
-        #print("检测类别:",category)
-        if len(result)==0:
-            #print("检测数据空")
-            pass
-        print("--------")
         for hit in result:
-            # pass
-            print(f"ID: {hit.id}, 相似度得分: {hit.score:.4f},类别:{hit.payload['category']}")
-        print("--------")
+            pass
+            # print(f"ID: {hit.id}, 相似度得分: {hit.score:.4f},数据库类别:{hit.payload['category']},真实分割类别:{category}")
         return [hit.id for hit in (result or [])]  # 返回特征 ID 列表

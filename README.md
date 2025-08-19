@@ -1,8 +1,12 @@
-##### 智能商品结算系统
+## 智能商品结算系统
+
+##### 识别界面
+
+![](./GUI/Resources/Icons/0002.png)
+
+##### 注册界面
 
 ![](./GUI/Resources/Icons/home.png)
-
-![](./GUI/Resources/Icons/0001.png)
 
 基础架构
 

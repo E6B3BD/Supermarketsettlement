@@ -12,6 +12,7 @@ from .workers.postprocess_worker import OutputProcessorTask
 from inference.segmentation.yolo_segment import SegModel
 from .components.Table import Tablewiget
 
+
 @dataclass
 class FramePacket:
     frame_id: int
@@ -26,7 +27,6 @@ class CaptureThread(QThread):
     opened = Signal(float)   # 源FPS
     eof = Signal()           # 结束
     enqueued = Signal()      # 队列从空到非空
-
     def __init__(self, video_source: VideoSource, buffer: Queue, is_realtime: bool, log: DailyLogger, fps_hint: float = 30.0):
         super().__init__()
         self.VS = video_source
@@ -100,8 +100,12 @@ class CaptureThread(QThread):
             if was_empty:
                 self.enqueued.emit()
 
+
+# 信号通知 触发帧的
+
 class VideoChannel(QObject):
     postprocessed = Signal(object)
+    commit50 = Signal()  # ← 新增：只给 USER 用的“50帧/EOF”专用信号
 
     # ——策略参数——
     BUFFER_SIZE_FILE = 64          # 文件：允许更深的预解码
@@ -118,26 +122,28 @@ class VideoChannel(QObject):
         self.log = DailyLogger("视频源推流")
         self.VS = VideoSource()
         self.model = None
-
         self.inference_pool = QThreadPool(); self.inference_pool.setMaxThreadCount(1)
         self.postprocess_pool = QThreadPool(); self.postprocess_pool.setMaxThreadCount(1)
         self.Table = Tablewiget(ui)
-
         self._buffer: Queue = None
         self._cap_thread: CaptureThread = None
         self._eof = False
         self._processing = False
-
         self._src_fps = 30.0
         self._is_video_file = False
-
         # 播放节拍：t0_wall = now - first_pts
         self._t0_wall = None
         self._last_pts = -1.0
-
         self._dispatch_timer = QTimer(timerType=Qt.PreciseTimer)
         self._dispatch_timer.setSingleShot(True)
         self._dispatch_timer.timeout.connect(self._dispatch_next)
+
+        # 50帧
+        self._batch = []  # 新增：批次缓存
+        self._frames_since_commit = 0  # 新增：自上次提交以来的帧计数
+
+
+
 
     # ———— 模型 ————
     def warmup_model(self):
@@ -365,6 +371,19 @@ class VideoChannel(QObject):
     def _on_postprocess_finished(self, masks):
         self.postprocessed.emit(masks)
 
+        # ——仅在 USER 身份下：累积并按 50 帧触发 commit50 ——
+        if self.status == status.USER:
+            if masks:
+                if isinstance(masks, (list, tuple)):
+                    self._batch.extend(masks)
+                else:
+                    self._batch.append(masks)
+            self._frames_since_commit += 1
+            if self._frames_since_commit >= 50:
+                self.commit50.emit()  # ★ 满 50 帧：发新信号
+                self._batch = []
+                self._frames_since_commit = 0
+
     # ———— 收尾 ————
     def _teardown_after_eof(self):
         # 文件：缓冲也清空且无在处理，即结束
@@ -372,6 +391,12 @@ class VideoChannel(QObject):
             self.log.info("视频播放结束")
             self.label.clear()
             self._stop_all()
+
+        # ——仅 USER：EOF 强制把剩余不足 50 的一批也发出去——
+        if self.status == status.USER and self._batch:
+            self.commit50.emit()  # ★ EOF 补提交
+            self._batch = []
+            self._frames_since_commit = 0
 
     def _stop_all(self):
         if self._cap_thread is not None:

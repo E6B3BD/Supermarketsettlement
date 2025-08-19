@@ -456,7 +456,7 @@ def save_debug(canvas, name: str, tid, save_dir: str):
 def AlignatBeta(output):
     # ===== 参数（你可按需改）=====
     SAVE_DIR          = r"I:\python-Code\Supermarketsettlement\DATA\F"  # 仅调试可视化
-    SAVE_DEBUG        = False   # 调试模块
+    SAVE_DEBUG        = False   # 调试模块 保存到硬盘可视化
     FINAL_SIZE        = 384    # 图像大小
     MIN_AREA          = 80    # 过滤过小噪点
     KSIZE             = 3     # 形态学内核

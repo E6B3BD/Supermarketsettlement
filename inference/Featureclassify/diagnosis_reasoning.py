@@ -46,6 +46,7 @@ class SymptomToDiseaseMapper():
             input_tensor = self.preprocess_for_model(feat)
             if modelname == "bag":
                 with torch.no_grad():
+                   # AA=self.bag(input_tensor)[0].tolist()
                     output.append(self.bag(input_tensor)[0].tolist())
             if modelname == "bottle":
                 with torch.no_grad():
@@ -58,3 +59,10 @@ class SymptomToDiseaseMapper():
                     output.append(self.can(input_tensor)[0].tolist())
 
         return output
+
+if __name__=="__main__":
+    img=cv2.imread(r"I:\python-Code\Supermarketsettlement\DATA\dataset\bag\T.png")
+    MaskList=[(img,"bag")]
+    models=SymptomToDiseaseMapper()
+    models.aftercuremask(MaskList)
+

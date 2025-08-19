@@ -2,6 +2,7 @@ from qdrant_client import QdrantClient as QdrantSDK
 from qdrant_client.http.models import Distance, VectorParams
 import yaml
 import os
+from qdrant_client.models import Filter, FieldCondition, MatchValue
 from logs.logger import DailyLogger
 
 
@@ -54,16 +55,34 @@ class QdrantClient:
         self.client.upsert(collection_name=self.collection_name, points=points)
 
     # 特征匹配
-    def search_vectors(self, query_vector, limit=3,MIN_SCORE=0.9):
+    def search_vectors(self, query_vector,category,limit=3,MIN_SCORE=0.9):
+
+        filter_condition = Filter(
+            must=[  # 必须满足以下条件
+                FieldCondition(
+                    key="category",  # ← 字段名（必须和 payload 中的一致）
+                    match=MatchValue(value=category)
+                )
+            ]
+        )
+
         result = self.client.query_points(
             collection_name=self.collection_name,
             query=query_vector,
+            #query_filter=filter_condition,  # ← 关键！传入过滤条件
             limit=limit,
             # 过滤值
             # score_threshold = MIN_SCORE ,
             # with_payload=False,  # 不要业务字段
             # with_vectors=False,  # 不要向量本体
         ).points
+        #print("检测类别:",category)
+        if len(result)==0:
+            #print("检测数据空")
+            pass
+        print("--------")
         for hit in result:
-            print(f"ID: {hit.id}, 相似度得分: {hit.score:.4f}")
+            # pass
+            print(f"ID: {hit.id}, 相似度得分: {hit.score:.4f},类别:{hit.payload['category']}")
+        print("--------")
         return [hit.id for hit in (result or [])]  # 返回特征 ID 列表

@@ -1,23 +1,23 @@
 import cv2
-import numpy as np
 import os
 from enum import Enum
 from typing import Union
 
 
 # 导入本地包
-from logs.logger import DailyLogger # 日志模块
+# 日志模块
+from logs.logger import DailyLogger
 
 class SourceType(Enum):
     CAMERA = "camera"
     VIDEO = "video"
 
 class VideoSource():
+    """对cv2.VideoCapture的轻量封装：统一 open/read/release 接口"""
     def __init__(self):
         self.cap=None
         self.is_opened = False
         self.log=DailyLogger("流媒体")
-
     def open(self, source_type: SourceType, source: Union[int, str] = 0) -> bool:
         self.release()  # 先释放旧资源
         if source_type == SourceType.CAMERA:

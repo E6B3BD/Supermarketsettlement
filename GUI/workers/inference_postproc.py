@@ -1,14 +1,10 @@
 from PySide2.QtCore import QRunnable, QObject, Signal
-import numpy as np
+# 本地包
 from inference.segmentation.postprocess import Alignat,extractiondata,AlignatBeta
-import uuid
-import cv2
-
 from logs.logger import DailyLogger
 
 class OutputProcessorSignals(QObject):
     finished = Signal(object)
-    error = Signal(str)
 
 class OutputProcessorTask(QRunnable):
     def __init__(self,output):
@@ -19,17 +15,8 @@ class OutputProcessorTask(QRunnable):
 
     def run(self):
         try:
-            # frame=self.output.orig_img
-            # 正常工作
-            # MaskList=Alignat(frame,self.output)
-            # 提取分类数据
-            # cv2.imwrite(f"I:\python-Code\Supermarketsettlement\DATA\A\{uuid.uuid4()}.png", self.frame)
             MaskList = AlignatBeta(self.output)
-
-            # MaskList = extractiondata(self.output)
-
             self.signals.finished.emit(MaskList)
         except Exception as e:
-            # 直接输出结果
-            # self.signals.error.emit(str(e))
+            # 日志输出错误
             self.log.error(str(e))

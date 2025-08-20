@@ -1,5 +1,4 @@
 # 控件的初始化
-from PySide2.QtWidgets import QApplication, QLineEdit, QWidget
 from PySide2.QtCore import Qt
 from PySide2 import QtWidgets, QtCore, QtGui
 def initialize_ui(window):

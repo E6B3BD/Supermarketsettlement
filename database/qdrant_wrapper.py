@@ -69,10 +69,9 @@ class QdrantClient:
         result = self.client.query_points(
             collection_name=self.collection_name,
             query=query_vector,
-            #query_filter=filter_condition,  # ← 关键！传入过滤条件
+            query_filter=filter_condition,
             limit=limit,
-            # 过滤值
-            # score_threshold = MIN_SCORE ,
+            score_threshold = MIN_SCORE ,
             # with_payload=False,  # 不要业务字段
             # with_vectors=False,  # 不要向量本体
         ).points

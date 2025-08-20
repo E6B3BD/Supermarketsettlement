@@ -1,7 +1,6 @@
 from GUI.main_window import Window
 import sys
 from PySide2.QtWidgets import QApplication
-
 # 日志的底层类
 from logs.logger import shutdown_logger
 

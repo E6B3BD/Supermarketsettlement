@@ -38,10 +38,6 @@ class SymptomToDiseaseMapper():
     def preprocess_for_model(self, img):
         """将原始图像预处理为模型输入张量"""
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        # img = cv2.resize(img, (224, 224))
-        # img = img.astype(np.float32) / 255.0
-        # img = np.transpose(img, (2, 0, 1))
-        # input_tensor = torch.from_numpy(img).unsqueeze(0)
         input_tensor = self.tf(img).unsqueeze(0).to(self.device)  # NCHW, float32
         return input_tensor
 
@@ -51,28 +47,6 @@ class SymptomToDiseaseMapper():
             feat = F.normalize(feat, dim=1)  # L2 normalize
             return feat.squeeze(0).cpu().numpy().tolist()
 
-
-    # 特征识别
-    # def aftercuremask(self, MaskList):
-    #     output = []
-    #     for feature in MaskList:
-    #         feat, modelname = feature
-    #         input_tensor = self.preprocess_for_model(feat)
-    #         if modelname == "bag":
-    #             with torch.no_grad():
-    #                # AA=self.bag(input_tensor)[0].tolist()
-    #                 output.append(self.bag(input_tensor)[0].tolist())
-    #         if modelname == "bottle":
-    #             with torch.no_grad():
-    #                 output.append(self.bottle(input_tensor)[0].tolist())
-    #         if modelname == "box":
-    #             with torch.no_grad():
-    #                 output.append(self.box(input_tensor)[0].tolist())
-    #         if modelname == "can":
-    #             with torch.no_grad():
-    #                 output.append(self.can(input_tensor)[0].tolist())
-    #
-    #     return output
 
     # 特征注册
     def Featureregistration(self, MaskList):

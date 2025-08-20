@@ -1,26 +1,11 @@
-
-import cv2
-import numpy as np
-import torch
-
-from utils.Net import FeatureNet
-from utils.cfg import MODEL_PATH
-
-
-from .Table import Tablewiget
-
-# from database.db_manager import DataBASE
-from database.product_service import ProductService
-
-
 from collections import deque, defaultdict, Counter
-import torch, torch.nn.functional as F
-from torchvision import transforms
+from PySide2.QtCore import QThreadPool
 
+# 本地包
+from .Table import Tablewiget
+from database.product_service import ProductService
 from inference.Featureclassify.diagnosis_reasoning import SymptomToDiseaseMapper
-
-
-
+from ..workers.feature_extractor import FeatureExtractionWorker
 
 # 特征匹配类
 class FeatureMatching:
@@ -35,17 +20,16 @@ class FeatureMatching:
         self.Tab=Tablewiget(ui)
         # 存储商品信息
         self.Commodity=[]
-
-        # ==== 新增：投票窗口与去重记账 ====
-        self._tid_window = defaultdict(lambda: deque(maxlen=5))  # tid -> 最近5帧的 pid
+        # 投票窗口与去重记账
+        self._tid_window = defaultdict(lambda: deque(maxlen=10))  # tid -> 最近5帧的 pid
         self._counted_pairs = set()  # {(tid, pid)} 已经计入过数量的组合，防止同一tid重复加
+        # 特征提取线程
+        # 线程池
+        self.thread_pool = QThreadPool()
+        self.thread_pool.setMaxThreadCount(1)
 
-
-
-
-
-    # 50帧触发
-    def FPS50inform(self):
+    # 投票触发接口
+    def VoteHandler(self):
         # 拷贝一份当前帧批次
         if not getattr(self, "Commodity", None):
             return
@@ -55,7 +39,6 @@ class FeatureMatching:
             self.Commodity.clear()
         else:
             self.Commodity = type(self.Commodity)()
-
         # 统计：每个 tid 本帧投给了哪个 pid（取候选Top1）
         pid_info = {}  # pid -> 任意一条商品字典（用于名字/价格上屏）
         for entry in batch:
@@ -71,7 +54,6 @@ class FeatureMatching:
                 continue
             self._tid_window[tid].append(pid)
             pid_info[pid] = top  # 记录一份元数据
-
         # 对每个 tid 做“最近窗口内多数投票”，达阈值才认定当前 pid
         tid_consensus = {}  # tid -> 稳定pid
         for tid, dq in list(self._tid_window.items()):
@@ -81,7 +63,6 @@ class FeatureMatching:
             pid, cnt = vote
             if cnt >= 3:  # 窗口内至少3票才认定
                 tid_consensus[tid] = pid
-
         # 汇总“新出现的 (tid,pid)” -> 按 pid 聚合数量（不同tid且同一pid才+1）
         add_plan = {}  # pid -> {"info": dict, "qty": int}
         for tid, pid in tid_consensus.items():
@@ -95,7 +76,6 @@ class FeatureMatching:
                 add_plan[pid] = {"info": info, "qty": 0}
             add_plan[pid]["qty"] += 1
             self._counted_pairs.add(pair)
-
         # 下发到UI
         if add_plan:
             winners = []
@@ -105,41 +85,31 @@ class FeatureMatching:
                 winners.append(data)
             self.UpdateUl(winners)
 
-    # 查询商品信息，并和追踪ID绑定
-    def MatchingDatabase(self, MaskList):
-        output=self.models.featurematching(MaskList)
+
+    # 查询商品信息，并和追踪ID绑定 交给异步线程处理
+    def MatchingDatabase(self, mask_list):
+        # worker = FeatureExtractionWorker(
+        #     model=self.models,
+        #     mask_list=mask_list,
+        #     Commodity=self.Commodity,
+        #     dataset=self.dataset
+        # )
+        # self.thread_pool.start(worker)
+        output = self.models.featurematching(mask_list)
         if not output:
             print("⚠️ output 为空，跳过数据库匹配")
             return
-       #
+        #
         # 来一帧，仅登记“候选 product_id”到各自 tid 的窗口，不在这里加数量
         for vector, cls, tid in output:
             CommodityData = self.dataset.search_similar_products(vector, cls)
             self.Commodity.append((tid, CommodityData))
-            # 存储类型
-            # [{'id': 'S002', 'name': '乐事薯片', 'price': 4.0, 'category': 'bag'},
-            #  {'id': 'X002', 'name': '红酒百醇', 'price': 4.0, 'category': 'box'},
-            #  {'id': 'X007', 'name': '好多鱼', 'price': 4.0, 'category': 'box'}]
-
-
-
-
-
 
 
     def UpdateUl(self,CommodityData):
         for data in CommodityData:
             qty = int(data.get("quantity", 1))
             self.Tab.add_item(data["name"], data["price"], data["id"], quantity=qty)
-
-
-
-
-
-
-
-
-
 
 
 if __name__=="__main__":

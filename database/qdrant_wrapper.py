@@ -54,7 +54,7 @@ class QdrantClient:
     def upsert_vectors(self, points):
         self.client.upsert(collection_name=self.collection_name, points=points)
 
-    # 特征匹配
+    # 特征匹配 单查询
     def search_vectors(self, query_vector,category,limit=3,MIN_SCORE=0.9):
 
         filter_condition = Filter(
@@ -74,8 +74,11 @@ class QdrantClient:
             score_threshold = MIN_SCORE ,
             # with_payload=False,  # 不要业务字段
             # with_vectors=False,  # 不要向量本体
+            with_payload=True      # 批量
         ).points
-        for hit in result:
-            pass
-            # print(f"ID: {hit.id}, 相似度得分: {hit.score:.4f},数据库类别:{hit.payload['category']},真实分割类别:{category}")
-        return [hit.id for hit in (result or [])]  # 返回特征 ID 列表
+        # for hit in result:
+        #     pass
+        #     print(f"ID: {hit.id}, 相似度得分: {hit.score:.4f},数据库类别:{hit.payload['category']},真实分割类别:{category}")
+        return [hit.payload['product_id'] for hit in (result or [])]  # 返回特征 ID 列表
+
+

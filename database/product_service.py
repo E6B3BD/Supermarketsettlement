@@ -61,7 +61,8 @@ class ProductService:
                 )
                 # points.append({"id": feature_id, "vector": vec.tolist()})
                 points.append({"id": feature_id, "vector": vec,"payload":{
-                    "category":category_name
+                    "category":category_name,
+                    "product_id":product_id
                 }})
             # 4️⃣ 写入向量数据库
             self.qdrant.upsert_vectors(points)
@@ -76,26 +77,24 @@ class ProductService:
             self.log.error(f"写入商品失败: {e}")
             return None
 
-    def query_by_feature_ids(self, feature_ids: list):
+    def query_by_feature_ids(self, product_ids: list):
         """
         根据特征 ID 查询商品信息
         :param feature_ids: [101, 102, ...]
         :return: [{"id": "B001", "name": "...", ...}]
         """
         try:
-            # 1️⃣ 根据 feature_id 查 product_id
-            placeholders = ','.join(['%s'] * len(feature_ids))
-            query = f"""
-                SELECT DISTINCT product_id 
-                FROM feature_mappings 
-                WHERE feature_id IN ({placeholders})
-            """
-            result = self.mysql.execute_query(query, feature_ids, fetch="all")
-            product_ids = [row[0] for row in result] if result else []
-
+            # # 1️⃣ 根据 feature_id 查 product_id
+            # placeholders = ','.join(['%s'] * len(feature_ids))
+            # query = f"""
+            #     SELECT DISTINCT product_id
+            #     FROM feature_mappings
+            #     WHERE feature_id IN ({placeholders})
+            # """
+            # result = self.mysql.execute_query(query, feature_ids, fetch="all")
+            # product_ids = [row[0] for row in result] if result else []
             if not product_ids:
                 return None
-
             # 2️⃣ 根据 product_id 查商品信息
             placeholders = ','.join(['%s'] * len(product_ids))
             query = f"""
@@ -121,9 +120,9 @@ class ProductService:
         """
         try:
             feature_ids = self.qdrant.search_vectors(query_vector, category,limit=top_k,MIN_SCORE=MIN_SCORE)
-            # print("向量特征库ID", feature_ids)
-            # return self.query_by_feature_ids(feature_ids)
-            return [] if not feature_ids else self.query_by_feature_ids(feature_ids)
+            # 这里做去重处理可以减缓查询的请求
+            unique = list(set(feature_ids))
+            return [] if not unique else self.query_by_feature_ids(unique)
         except Exception as e:
             self.log.error(f"相似搜索失败: {e}")
             return None

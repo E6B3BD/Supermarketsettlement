@@ -88,22 +88,23 @@ class FeatureMatching:
 
     # 查询商品信息，并和追踪ID绑定 交给异步线程处理
     def MatchingDatabase(self, mask_list):
-        # worker = FeatureExtractionWorker(
-        #     model=self.models,
-        #     mask_list=mask_list,
-        #     Commodity=self.Commodity,
-        #     dataset=self.dataset
-        # )
-        # self.thread_pool.start(worker)
-        output = self.models.featurematching(mask_list)
-        if not output:
-            print("⚠️ output 为空，跳过数据库匹配")
-            return
-        #
-        # 来一帧，仅登记“候选 product_id”到各自 tid 的窗口，不在这里加数量
-        for vector, cls, tid in output:
-            CommodityData = self.dataset.search_similar_products(vector, cls)
-            self.Commodity.append((tid, CommodityData))
+        worker = FeatureExtractionWorker(
+            model=self.models,
+            mask_list=mask_list,
+            Commodity=self.Commodity,
+            dataset=self.dataset
+        )
+        self.thread_pool.start(worker)
+
+        # output = self.models.featurematching(mask_list)
+        # if not output:
+        #     print("⚠️ output 为空，跳过数据库匹配")
+        #     return
+        # #
+        # # 来一帧，仅登记“候选 product_id”到各自 tid 的窗口，不在这里加数量
+        # for vector, cls, tid in output:
+        #     CommodityData = self.dataset.search_similar_products(vector, cls)
+        #     self.Commodity.append((tid, CommodityData))
 
 
     def UpdateUl(self,CommodityData):

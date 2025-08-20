@@ -103,6 +103,15 @@ class VideoChannel(QObject):
         if not self.VS.open(SourceType.VIDEO, video_path):
             self.log.info("❌无法打开视频文件")
             return
+
+        # 重置播放/配速状态
+        # self._is_video_file = True
+        # self._eof = False
+        # self._processing = False
+        # self._t0_wall = None
+        # self._last_pts = -1.0
+
+
         # 创建缓冲队列
         self._buffer = Queue(maxsize=self.BUFFER_SIZE_FILE)
         # 创建抓取线程
@@ -288,6 +297,10 @@ class VideoChannel(QObject):
         self._processing = False
         if self._dispatch_timer.isActive():
             self._dispatch_timer.stop()
+
+        # 彻底清理配速基准
+        self._t0_wall = None
+        self._last_pts = -1.0
 
 
 
